@@ -120,6 +120,12 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!65 &14865029 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 2220839196462449343, guid: a6bace2f19e4b194cbcb8c77a2024b3d,
+    type: 3}
+  m_PrefabInstance: {fileID: 35008811432441155}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &27576013 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 35008811422233486, guid: a6bace2f19e4b194cbcb8c77a2024b3d,
@@ -1188,5 +1194,15 @@ PrefabInstance:
       propertyPath: speed
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 35008811422233486, guid: a6bace2f19e4b194cbcb8c77a2024b3d,
+        type: 3}
+      propertyPath: boxCollider
+      value: 
+      objectReference: {fileID: 14865029}
+    - target: {fileID: 35008811422233486, guid: a6bace2f19e4b194cbcb8c77a2024b3d,
+        type: 3}
+      propertyPath: mainBGQuadTransform
+      value: 
+      objectReference: {fileID: 1639644721}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a6bace2f19e4b194cbcb8c77a2024b3d, type: 3}
