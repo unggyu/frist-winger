@@ -11,7 +11,7 @@ public class BGScrollData
 public class BGScroller : MonoBehaviour
 {
     [SerializeField]
-    BGScrollData[] scrollDatas;
+    BGScrollData[] scrollDatas = null;
 
     // Start is called before the first frame update
     void Start()
