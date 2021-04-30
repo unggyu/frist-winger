@@ -2,7 +2,7 @@
 
 public class Enemy : MonoBehaviour
 {
-    public enum State
+    public enum State : int
     {
         /// <summary>
         /// 사용전
@@ -47,6 +47,11 @@ public class Enemy : MonoBehaviour
     [SerializeField]
     float currentSpeed = 0.0f;
 
+    Vector3 currentVelocity = Vector3.zero;
+
+    float moveStartTime = 0.0f;
+    float battleStartTime = 0.0f;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -56,22 +61,62 @@ public class Enemy : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            Appear(new Vector3(7f, transform.position.y, transform.position.z));
+        }
+
+        switch (currentState)
+        {
+            case State.None:
+            case State.Ready:
+                break;
+            case State.Dead:
+                break;
+            case State.Appear:
+            case State.Disappear:
+                UpdateSpeed();
+                UpdateMove();
+                break;
+            case State.Battle:
+                UpdateBattle();
+                break;
+        }
     }
 
     void UpdateSpeed()
     {
-
+        currentSpeed = Mathf.Lerp(currentSpeed, maxSpeed, (Time.time - moveStartTime) / maxSpeedTime);
     }
 
     void UpdateMove()
     {
+        float distance = Vector3.Distance(targetPosition, transform.position);
+        if (distance == 0f)
+        {
+            Arrived();
+            return;
+        }
 
+        currentVelocity = (targetPosition - transform.position).normalized * currentSpeed;
+
+        // 속도 = 거리 / 시간 이므로 시간 = 거리 / 속도
+        transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref currentVelocity, distance / currentSpeed, maxSpeed);
     }
 
     void Arrived()
     {
+        currentSpeed = 0f;
 
+        if (currentState == State.Appear)
+        {
+            currentState = State.Battle;
+            battleStartTime = Time.time;
+        }
+        else // if (currentState == State.Disappear)
+        {
+            currentState = State.None;
+        }
     }
 
     public void Appear(Vector3 targetPos)
@@ -80,13 +125,23 @@ public class Enemy : MonoBehaviour
         currentSpeed = maxSpeed;
 
         currentState = State.Appear;
+        moveStartTime = Time.time;
     }
 
     void Disappear(Vector3 targetPos)
     {
         targetPosition = targetPos;
-        currentSpeed = 0;
+        currentSpeed = 0f;
 
         currentState = State.Disappear;
+        moveStartTime = Time.time;
+    }
+
+    void UpdateBattle()
+    {
+        if (Time.time - battleStartTime > 3.0f)
+        {
+            Disappear(new Vector3(-15.0f, transform.position.y, transform.position.z));
+        }
     }
 }
