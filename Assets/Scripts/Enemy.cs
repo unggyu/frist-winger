@@ -50,7 +50,20 @@ public class Enemy : MonoBehaviour
     Vector3 currentVelocity = Vector3.zero;
 
     float moveStartTime = 0.0f;
-    float battleStartTime = 0.0f;
+
+    [SerializeField]
+    Transform fireTransform = null;
+
+    [SerializeField]
+    GameObject bullet = null;
+
+    [SerializeField]
+    float bulletSpeed = 1.0f;
+
+    float lastBattleUpdateTime = 0.0f;
+
+    [SerializeField]
+    int fireRemainCount = 1;
 
     // Start is called before the first frame update
     void Start()
@@ -106,7 +119,7 @@ public class Enemy : MonoBehaviour
         if (currentState == State.Appear)
         {
             currentState = State.Battle;
-            battleStartTime = Time.time;
+            lastBattleUpdateTime = Time.time;
         }
         else // if (currentState == State.Disappear)
         {
@@ -134,9 +147,20 @@ public class Enemy : MonoBehaviour
 
     void UpdateBattle()
     {
-        if (Time.time - battleStartTime > 3.0f)
+        if (Time.time - lastBattleUpdateTime > 1.0f)
         {
-            Disappear(new Vector3(-15.0f, transform.position.y, transform.position.z));
+            if (fireRemainCount > 0)
+            {
+                Fire();
+
+                fireRemainCount--;
+            }
+            else
+            {
+                Disappear(new Vector3(-15.0f, transform.position.y, transform.position.z));
+            }
+
+            lastBattleUpdateTime = Time.time;
         }
     }
 
@@ -152,5 +176,12 @@ public class Enemy : MonoBehaviour
     public void OnCrash(Player player)
     {
 
+    }
+
+    public void Fire()
+    {
+        GameObject go = Instantiate(this.bullet);
+        Bullet bullet = go.GetComponent<Bullet>();
+        bullet.Fire(OwnerSide.Enemy, fireTransform.position, -fireTransform.right, bulletSpeed);
     }
 }

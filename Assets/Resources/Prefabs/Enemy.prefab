@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1697433215220151987}
   - component: {fileID: 1727645706515188795}
   - component: {fileID: 1716672507293255827}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: StarSparrow13
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -78,6 +78,36 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+--- !u!1 &2630025637650631122
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2288729797562068280}
+  m_Layer: 0
+  m_Name: FirePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2288729797562068280
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2630025637650631122}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.5048, y: 0.0052, z: -0.024169922}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1751555842776899775}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3440912061953107368
 GameObject:
   m_ObjectHideFlags: 0
@@ -88,7 +118,7 @@ GameObject:
   m_Component:
   - component: {fileID: 717167742084039185}
   - component: {fileID: 5949887740121229909}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: EnemyCollider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -133,7 +163,7 @@ GameObject:
   - component: {fileID: 1751555842776899775}
   - component: {fileID: 5818615736349008455}
   - component: {fileID: 1745775698002728231}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Enemy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -153,6 +183,7 @@ Transform:
   m_Children:
   - {fileID: 1697433215220151987}
   - {fileID: 717167742084039185}
+  - {fileID: 2288729797562068280}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -171,6 +202,10 @@ MonoBehaviour:
   currentState: -1
   targetPosition: {x: 0, y: 0, z: 0}
   currentSpeed: 0
+  fireTransform: {fileID: 2288729797562068280}
+  bullet: {fileID: 1801400960815377704, guid: a0297ce82033114488f109ab4e456f69, type: 3}
+  bulletSpeed: 10
+  fireRemainCount: 3
 --- !u!54 &1745775698002728231
 Rigidbody:
   m_ObjectHideFlags: 0
