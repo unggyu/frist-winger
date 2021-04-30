@@ -61,11 +61,6 @@ public class Enemy : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.L))
-        {
-            Appear(new Vector3(7f, transform.position.y, transform.position.z));
-        }
-
         switch (currentState)
         {
             case State.None:
@@ -143,5 +138,19 @@ public class Enemy : MonoBehaviour
         {
             Disappear(new Vector3(-15.0f, transform.position.y, transform.position.z));
         }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        Player player = other.GetComponentInParent<Player>();
+        if (player)
+        {
+            player.OnCrash(this);
+        }
+    }
+
+    public void OnCrash(Player player)
+    {
+
     }
 }
