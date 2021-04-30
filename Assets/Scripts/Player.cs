@@ -6,6 +6,9 @@ public class Player : MonoBehaviour
     [SerializeField] float speed = 1.0f;
     [SerializeField] BoxCollider boxCollider = null;
     [SerializeField] Transform mainBGQuadTransform = null;
+    [SerializeField] Transform fireTransform = null;
+    [SerializeField] GameObject bullet = null;
+    [SerializeField] float bulletSpeed = 1.0f;
 
     // Start is called before the first frame update
     void Start()
@@ -75,5 +78,12 @@ public class Player : MonoBehaviour
     public void OnCrash(Enemy enemy)
     {
 
+    }
+
+    public void Fire()
+    {
+        GameObject go = Instantiate(this.bullet);
+        Bullet bullet = go.GetComponent<Bullet>();
+        bullet.Fire(OwnerSide.Player, fireTransform.position, fireTransform.right, bulletSpeed); 
     }
 }
