@@ -2,52 +2,14 @@
 
 public class Actor : MonoBehaviour
 {
-    [SerializeField]
-    protected int maxHp = 100;
+    [SerializeField] protected int maxHp = 100;
+    [SerializeField] protected int currentHp;
+    [SerializeField] protected int damage = 1;
+    [SerializeField] protected int crashDamage = 100;
+    [SerializeField] private bool isDead = false;
 
-    [SerializeField]
-    protected int currentHp;
-
-    [SerializeField]
-    protected int damage = 1;
-
-    [SerializeField]
-    protected int crashDamage = 100;
-
-    [SerializeField]
-    bool isDead = false;
-
-    public bool IsDead
-    {
-        get => isDead;
-    }
-
-    protected int CrashDamage
-    {
-        get => crashDamage;
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        Initialize();
-    }
-
-    protected virtual void Initialize()
-    {
-        currentHp = maxHp;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        UpdateActor();
-    }
-
-    protected virtual void UpdateActor()
-    {
-
-    }
+    public bool IsDead => isDead;
+    protected int CrashDamage => crashDamage;
 
     public virtual void OnBulletHited(Actor attacker, int damage)
     {
@@ -61,7 +23,17 @@ public class Actor : MonoBehaviour
         DecreaseHp(attacker, damage);
     }
 
-    void DecreaseHp(Actor attacker, int value)
+    protected virtual void Initialize()
+    {
+        currentHp = maxHp;
+    }
+
+    protected virtual void UpdateActor()
+    {
+
+    }
+
+    protected virtual void DecreaseHp(Actor attacker, int value)
     {
         if (isDead)
         {
@@ -87,5 +59,15 @@ public class Actor : MonoBehaviour
         isDead = true;
 
         SystemManager.Instance.EffectManager.GenerateEffect(EffectManager.ActorDeadFxIndex, transform.position);
+    }
+
+    private void Start()
+    {
+        Initialize();
+    }
+
+    private void Update()
+    {
+        UpdateActor();
     }
 }

@@ -2,17 +2,29 @@
 
 public class Player : Actor
 {
-    [SerializeField] Vector3 moveVector = Vector3.zero;
-    [SerializeField] float speed = 1.0f;
-    [SerializeField] BoxCollider boxCollider = null;
-    [SerializeField] Transform mainBGQuadTransform = null;
-    [SerializeField] Transform fireTransform = null;
-    [SerializeField] float bulletSpeed = 1.0f;
+    [SerializeField] private float speed = 1.0f;
+    [SerializeField] private float bulletSpeed = 1.0f;
+    [SerializeField] private Vector3 moveVector = Vector3.zero;
+    [SerializeField] private Transform mainBGQuadTransform = null;
+    [SerializeField] private Transform fireTransform = null;
+    [SerializeField] private BoxCollider boxCollider = null;
+    [SerializeField] private Gage hpGage = null;
 
-    // Update is called once per frame
-    void Update()
+    public void ProcessInput(Vector3 moveDirection)
     {
-        UpdateMove();
+        moveVector = moveDirection * speed * Time.deltaTime;
+    }
+
+    public void Fire()
+    {
+        Bullet bullet = SystemManager.Instance.BulletManager.Generate(BulletManager.PlayerBulletIndex);
+        bullet.Fire(OwnerSide.Player, fireTransform.position, fireTransform.right, bulletSpeed, damage);
+    }
+
+    protected override void Initialize()
+    {
+        base.Initialize();
+        hpGage.SetHp(currentHp, maxHp);
     }
 
     protected override void UpdateActor()
@@ -20,7 +32,24 @@ public class Player : Actor
         UpdateMove();
     }
 
-    void UpdateMove()
+    protected override void DecreaseHp(Actor attacker, int value)
+    {
+        base.DecreaseHp(attacker, value);
+        hpGage.SetHp(currentHp, maxHp);
+    }
+
+    protected override void OnDead(Actor killer)
+    {
+        base.OnDead(killer);
+        gameObject.SetActive(false);
+    }
+
+    private void Update()
+    {
+        UpdateMove();
+    }
+
+    private void UpdateMove()
     {
         if (moveVector.sqrMagnitude == 0)
         {
@@ -32,12 +61,16 @@ public class Player : Actor
         transform.position += moveVector;
     }
 
-    public void ProcessInput(Vector3 moveDirection)
+    private void OnTriggerEnter(Collider other)
     {
-        moveVector = moveDirection * speed * Time.deltaTime;
+        Enemy enemy = other.GetComponentInParent<Enemy>();
+        if (enemy)
+        {
+            enemy.OnCrash(enemy, damage);
+        }
     }
 
-    Vector3 AdjustMoveVector(Vector3 moveVector)
+    private Vector3 AdjustMoveVector(Vector3 moveVector)
     {
         Vector3 result = boxCollider.transform.position + boxCollider.center + moveVector;
 
@@ -62,26 +95,5 @@ public class Player : Actor
         }
 
         return moveVector;
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        Enemy enemy = other.GetComponentInParent<Enemy>();
-        if (enemy)
-        {
-            enemy.OnCrash(enemy, damage);
-        }
-    }
-
-    public void Fire()
-    {
-        Bullet bullet = SystemManager.Instance.BulletManager.Generate(BulletManager.PlayerBulletIndex);
-        bullet.Fire(OwnerSide.Player, fireTransform.position, fireTransform.right, bulletSpeed, damage);
-    }
-
-    protected override void OnDead(Actor killer)
-    {
-        base.OnDead(killer);
-        gameObject.SetActive(false);
     }
 }
