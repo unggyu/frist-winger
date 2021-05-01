@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class Enemy : MonoBehaviour
+public class Enemy : Actor
 {
     public enum State : int
     {
@@ -65,14 +65,7 @@ public class Enemy : MonoBehaviour
     [SerializeField]
     int fireRemainCount = 1;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
+    protected override void UpdateActor()
     {
         switch (currentState)
         {
@@ -169,19 +162,14 @@ public class Enemy : MonoBehaviour
         Player player = other.GetComponentInParent<Player>();
         if (player)
         {
-            player.OnCrash(this);
+            player.OnCrash(damage);
         }
-    }
-
-    public void OnCrash(Player player)
-    {
-
     }
 
     public void Fire()
     {
         GameObject go = Instantiate(this.bullet);
         Bullet bullet = go.GetComponent<Bullet>();
-        bullet.Fire(OwnerSide.Enemy, fireTransform.position, -fireTransform.right, bulletSpeed);
+        bullet.Fire(OwnerSide.Enemy, fireTransform.position, -fireTransform.right, bulletSpeed, damage);
     }
 }

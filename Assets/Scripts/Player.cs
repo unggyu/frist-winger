@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class Player : MonoBehaviour
+public class Player : Actor
 {
     [SerializeField] Vector3 moveVector = Vector3.zero;
     [SerializeField] float speed = 1.0f;
@@ -18,6 +18,11 @@ public class Player : MonoBehaviour
 
     // Update is called once per frame
     void Update()
+    {
+        UpdateMove();
+    }
+
+    protected override void UpdateActor()
     {
         UpdateMove();
     }
@@ -71,19 +76,14 @@ public class Player : MonoBehaviour
         Enemy enemy = other.GetComponentInParent<Enemy>();
         if (enemy)
         {
-            enemy.OnCrash(this);
+            enemy.OnCrash(damage);
         }
-    }
-
-    public void OnCrash(Enemy enemy)
-    {
-
     }
 
     public void Fire()
     {
         GameObject go = Instantiate(this.bullet);
         Bullet bullet = go.GetComponent<Bullet>();
-        bullet.Fire(OwnerSide.Player, fireTransform.position, fireTransform.right, bulletSpeed); 
+        bullet.Fire(OwnerSide.Player, fireTransform.position, fireTransform.right, bulletSpeed, damage);
     }
 }

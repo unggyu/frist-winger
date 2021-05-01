@@ -125,6 +125,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34461a94cce647b4da008b09e1234f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  maxHp: 100
+  currentHp: 0
+  damage: 100
+  crashDamage: 100
+  isDead: 0
   moveVector: {x: 0, y: 0, z: 0}
   speed: 1
   boxCollider: {fileID: 0}

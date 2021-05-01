@@ -21,6 +21,7 @@ public class Bullet : MonoBehaviour
     float firedTime = 0.0f;
     bool needMove = false;
     bool hited = false;
+    int damage = 1;
 
     // Start is called before the first frame update
     void Start()
@@ -49,15 +50,15 @@ public class Bullet : MonoBehaviour
         Vector3 moveVector = moveDirection.normalized * speed * Time.deltaTime;
         moveVector = AdjustMove(moveVector);
         transform.position += moveVector;
-        Debug.Log(transform.position);
     }
 
-    public void Fire(OwnerSide ownerSide, Vector3 firePosition, Vector3 direction, float speed)
+    public void Fire(OwnerSide ownerSide, Vector3 firePosition, Vector3 direction, float speed, int damage)
     {
         this.ownerSide = ownerSide;
         transform.position = firePosition;
         moveDirection = direction;
         this.speed = speed;
+        this.damage = damage;
 
         needMove = true;
         firedTime = Time.time;
@@ -81,20 +82,32 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-        hited = true;
-        needMove = false;
-
-        Collider myCollider = GetComponentInChildren<Collider>();
-        myCollider.enabled = false;
-
         if (ownerSide == OwnerSide.Player)
         {
             Enemy enemy = collider.GetComponentInParent<Enemy>();
+            if (enemy.IsDead)
+            {
+                return;
+            }
+
+            enemy.OnBulletHited(damage);
         }
         else
         {
             Player player = collider.GetComponentInParent<Player>();
+            if (player.IsDead)
+            {
+                return;
+            }
+
+            player.OnBulletHited(damage);
         }
+
+        Collider myCollider = GetComponentInChildren<Collider>();
+        myCollider.enabled = false;
+
+        hited = true;
+        needMove = false;
     }
 
     private void OnTriggerEnter(Collider other)

@@ -30,6 +30,9 @@ public class SystemManager : MonoBehaviour
         }
 
         instance = this;
+
+        // Scene 이동간에 사라지지 않도록 처리
+        DontDestroyOnLoad(gameObject);
     }
 
     // Start is called before the first frame update
