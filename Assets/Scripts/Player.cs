@@ -10,12 +10,6 @@ public class Player : Actor
     [SerializeField] GameObject bullet = null;
     [SerializeField] float bulletSpeed = 1.0f;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
     // Update is called once per frame
     void Update()
     {
@@ -85,5 +79,11 @@ public class Player : Actor
         GameObject go = Instantiate(this.bullet);
         Bullet bullet = go.GetComponent<Bullet>();
         bullet.Fire(OwnerSide.Player, fireTransform.position, fireTransform.right, bulletSpeed, damage);
+    }
+
+    protected override void OnDead(Actor killer)
+    {
+        base.OnDead(killer);
+        gameObject.SetActive(false);
     }
 }

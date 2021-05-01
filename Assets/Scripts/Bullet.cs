@@ -82,32 +82,29 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-        if (ownerSide == OwnerSide.Player)
+        if (collider.gameObject.layer == LayerMask.NameToLayer("EnemyBullet") ||
+            collider.gameObject.layer == LayerMask.NameToLayer("PlayerBullet"))
         {
-            Enemy enemy = collider.GetComponentInParent<Enemy>();
-            if (enemy.IsDead)
-            {
-                return;
-            }
-
-            enemy.OnBulletHited(enemy, damage);
+            return;
         }
-        else
+
+        Actor actor = collider.GetComponentInParent<Actor>();
+        if (actor && actor.IsDead)
         {
-            Player player = collider.GetComponentInParent<Player>();
-            if (player.IsDead)
-            {
-                return;
-            }
-
-            player.OnBulletHited(player, damage);
+            return;
         }
+
+        actor.OnBulletHited(actor, damage);
 
         Collider myCollider = GetComponentInChildren<Collider>();
         myCollider.enabled = false;
 
         hited = true;
         needMove = false;
+
+        GameObject go = SystemManager.Instance.EffectManager.GenerateEffect(0, transform.position);
+        go.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+        Disappear();
     }
 
     private void OnTriggerEnter(Collider other)

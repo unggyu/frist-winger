@@ -17,16 +17,15 @@ public class EffectManager : MonoBehaviour
         
     }
 
-    public bool GenerateEffect(int index, Vector3 position)
+    public GameObject GenerateEffect(int index, Vector3 position)
     {
         if (index < 0 || index >= effectPrefabs.Length)
         {
             Debug.LogError("GenerateEffect error! out of range! index = " + index);
-            return false;
+            return null;
         }
 
         GameObject go = Instantiate(effectPrefabs[index], position, Quaternion.identity);
-
-        return true;
+        return go;
     }
 }
