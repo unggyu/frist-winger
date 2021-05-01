@@ -90,7 +90,7 @@ public class Bullet : MonoBehaviour
                 return;
             }
 
-            enemy.OnBulletHited(damage);
+            enemy.OnBulletHited(enemy, damage);
         }
         else
         {
@@ -100,7 +100,7 @@ public class Bullet : MonoBehaviour
                 return;
             }
 
-            player.OnBulletHited(damage);
+            player.OnBulletHited(player, damage);
         }
 
         Collider myCollider = GetComponentInChildren<Collider>();

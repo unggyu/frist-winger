@@ -76,7 +76,7 @@ public class Player : Actor
         Enemy enemy = other.GetComponentInParent<Enemy>();
         if (enemy)
         {
-            enemy.OnCrash(damage);
+            enemy.OnCrash(enemy, damage);
         }
     }
 

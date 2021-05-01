@@ -15,16 +15,31 @@ public class SystemManager : MonoBehaviour
     [SerializeField]
     Player player = null;
 
+    GamePointAccumulator gamePointAccumulator = new GamePointAccumulator();
+
+    [SerializeField]
+    EffectManager effectManager;
+
     public Player Player
     {
         get => player;
+    }
+
+    public GamePointAccumulator GamePointAccumulator
+    {
+        get => gamePointAccumulator;
+    }
+
+    public EffectManager EffectManager
+    {
+        get => effectManager;
     }
 
     private void Awake()
     {
         if (instance != null)
         {
-            Debug.LogError("SystemManager singletone error!");
+            Debug.LogError("SystemManager is initialized twice!");
             Destroy(gameObject);
             return;
         }

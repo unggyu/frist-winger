@@ -65,6 +65,9 @@ public class Enemy : Actor
     [SerializeField]
     int fireRemainCount = 1;
 
+    [SerializeField]
+    int gamePoint = 0;
+
     protected override void UpdateActor()
     {
         switch (currentState)
@@ -162,7 +165,7 @@ public class Enemy : Actor
         Player player = other.GetComponentInParent<Player>();
         if (player)
         {
-            player.OnCrash(damage);
+            player.OnCrash(player, damage);
         }
     }
 
@@ -171,5 +174,14 @@ public class Enemy : Actor
         GameObject go = Instantiate(this.bullet);
         Bullet bullet = go.GetComponent<Bullet>();
         bullet.Fire(OwnerSide.Enemy, fireTransform.position, -fireTransform.right, bulletSpeed, damage);
+    }
+
+    protected override void OnDead(Actor killer)
+    {
+        base.OnDead(killer);
+
+        SystemManager.Instance.GamePointAccumulator.Accumulate(gamePoint);
+
+        currentState = State.Dead;
     }
 }
