@@ -2,38 +2,27 @@
 
 public class SystemManager : MonoBehaviour
 {
-    static SystemManager instance = null;
+    private static SystemManager instance = null;
+    public static SystemManager Instance => instance;
 
-    public static SystemManager Instance
-    {
-        get
-        {
-            return instance;
-        }
-    }
+    [SerializeField] private Player player = null;
+    [SerializeField] private EffectManager effectManager = null;
+    [SerializeField] private BulletManager bulletManager = null;
+    [SerializeField] private EnemyManager enemyManager = null;
 
-    [SerializeField]
-    Player player = null;
+    private GamePointAccumulator gamePointAccumulator = new GamePointAccumulator();
+    private PrefabCacheSystem enemyCacheSystem = new PrefabCacheSystem();
+    private PrefabCacheSystem bulletCacheSystem = new PrefabCacheSystem();
+    private PrefabCacheSystem effectCacheSystem = new PrefabCacheSystem();
 
-    GamePointAccumulator gamePointAccumulator = new GamePointAccumulator();
-
-    [SerializeField]
-    EffectManager effectManager;
-
-    public Player Player
-    {
-        get => player;
-    }
-
-    public GamePointAccumulator GamePointAccumulator
-    {
-        get => gamePointAccumulator;
-    }
-
-    public EffectManager EffectManager
-    {
-        get => effectManager;
-    }
+    public Player Player => player;
+    public EffectManager EffectManager => effectManager;
+    public BulletManager BulletManager => bulletManager;
+    public EnemyManager EnemyManager => enemyManager;
+    public GamePointAccumulator GamePointAccumulator => gamePointAccumulator;
+    public PrefabCacheSystem EnemyCacheSystem => enemyCacheSystem;
+    public PrefabCacheSystem BulletCacheSystem => bulletCacheSystem;
+    public PrefabCacheSystem EffectCacheSystem => effectCacheSystem;
 
     private void Awake()
     {
@@ -48,17 +37,5 @@ public class SystemManager : MonoBehaviour
 
         // Scene 이동간에 사라지지 않도록 처리
         DontDestroyOnLoad(gameObject);
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }

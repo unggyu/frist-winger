@@ -9,25 +9,16 @@ public enum OwnerSide : int
 public class Bullet : MonoBehaviour
 {
     const float lifeTime = 15.0f;
-
     OwnerSide ownerSide = OwnerSide.Player;
-
-    [SerializeField]
-    Vector3 moveDirection = Vector3.zero;
-
-    [SerializeField]
-    float speed = 0.0f;
-
     float firedTime = 0.0f;
     bool needMove = false;
     bool hited = false;
     int damage = 1;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    [SerializeField] Vector3 moveDirection = Vector3.zero;
+    [SerializeField] float speed = 0.0f;
+
+    public string FilePath { get; set; }
 
     // Update is called once per frame
     void Update()

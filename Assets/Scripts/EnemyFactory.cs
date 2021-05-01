@@ -4,20 +4,7 @@ using UnityEngine;
 public class EnemyFactory : MonoBehaviour
 {
     public const string enemyPath = "Prefabs/Enemy";
-
-    Dictionary<string, GameObject> enemyFileCache = new Dictionary<string, GameObject>();
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    readonly Dictionary<string, GameObject> enemyFileCache = new Dictionary<string, GameObject>();
 
     public GameObject Load(string resourcePath)
     {
@@ -29,18 +16,17 @@ public class EnemyFactory : MonoBehaviour
         }
         else
         {
+            // 캐시에 없으므로 로드
             go = Resources.Load<GameObject>(resourcePath);
             if (!go)
             {
-                Debug.LogError("Load error! path = " + resourcePath);
+                Debug.LogError("Enemy load error! path = " + resourcePath);
                 return null;
             }
-
+            // 로드 후 캐시에 적재
             enemyFileCache.Add(resourcePath, go);
         }
 
-        GameObject instancedGO = Instantiate(go);
-
-        return instancedGO;
+        return go;
     }
 }

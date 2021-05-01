@@ -35,38 +35,22 @@ public class Enemy : Actor
         Disappear
     }
 
-    [SerializeField]
-    State currentState = State.None;
-
     const float maxSpeed = 10.0f;
     const float maxSpeedTime = 0.5f;
 
-    [SerializeField]
-    Vector3 targetPosition = Vector3.zero;
-
-    [SerializeField]
-    float currentSpeed = 0.0f;
-
+    float lastBattleUpdateTime = 0.0f;
+    float moveStartTime = 0.0f;
     Vector3 currentVelocity = Vector3.zero;
 
-    float moveStartTime = 0.0f;
+    [SerializeField] State currentState = State.None;
+    [SerializeField] Vector3 targetPosition = Vector3.zero;
+    [SerializeField] float currentSpeed = 0.0f;
+    [SerializeField] Transform fireTransform = null;
+    [SerializeField] float bulletSpeed = 1.0f;
+    [SerializeField] int fireRemainCount = 1;
+    [SerializeField] int gamePoint = 0;
 
-    [SerializeField]
-    Transform fireTransform = null;
-
-    [SerializeField]
-    GameObject bullet = null;
-
-    [SerializeField]
-    float bulletSpeed = 1.0f;
-
-    float lastBattleUpdateTime = 0.0f;
-
-    [SerializeField]
-    int fireRemainCount = 1;
-
-    [SerializeField]
-    int gamePoint = 0;
+    public string FilePath { get; set; }
 
     protected override void UpdateActor()
     {
@@ -171,8 +155,7 @@ public class Enemy : Actor
 
     public void Fire()
     {
-        GameObject go = Instantiate(this.bullet);
-        Bullet bullet = go.GetComponent<Bullet>();
+        Bullet bullet = SystemManager.Instance.BulletManager.Generate(BulletManager.EnemyBulletIndex);
         bullet.Fire(OwnerSide.Enemy, fireTransform.position, -fireTransform.right, bulletSpeed, damage);
     }
 
@@ -181,8 +164,8 @@ public class Enemy : Actor
         base.OnDead(killer);
 
         SystemManager.Instance.GamePointAccumulator.Accumulate(gamePoint);
+        SystemManager.Instance.EnemyManager.RemoveEnemy(this);
 
         currentState = State.Dead;
-        Destroy(gameObject);
     }
 }

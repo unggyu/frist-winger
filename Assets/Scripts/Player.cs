@@ -7,7 +7,6 @@ public class Player : Actor
     [SerializeField] BoxCollider boxCollider = null;
     [SerializeField] Transform mainBGQuadTransform = null;
     [SerializeField] Transform fireTransform = null;
-    [SerializeField] GameObject bullet = null;
     [SerializeField] float bulletSpeed = 1.0f;
 
     // Update is called once per frame
@@ -76,8 +75,7 @@ public class Player : Actor
 
     public void Fire()
     {
-        GameObject go = Instantiate(this.bullet);
-        Bullet bullet = go.GetComponent<Bullet>();
+        Bullet bullet = SystemManager.Instance.BulletManager.Generate(BulletManager.PlayerBulletIndex);
         bullet.Fire(OwnerSide.Player, fireTransform.position, fireTransform.right, bulletSpeed, damage);
     }
 
