@@ -93,7 +93,7 @@ public class Bullet : MonoBehaviour
         hited = true;
         needMove = false;
 
-        GameObject go = SystemManager.Instance.EffectManager.GenerateEffect(0, transform.position);
+        GameObject go = SystemManager.Instance.EffectManager.GenerateEffect(EffectManager.BulletDisappearFxIndex, transform.position);
         go.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
         Disappear();
     }
