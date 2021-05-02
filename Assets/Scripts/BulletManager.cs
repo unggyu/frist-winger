@@ -6,26 +6,13 @@ public class BulletManager : MonoBehaviour
     public const int PlayerBulletIndex = 0;
     public const int EnemyBulletIndex = 1;
 
-    Dictionary<string, GameObject> fileCache = new Dictionary<string, GameObject>();
+    private readonly Dictionary<string, GameObject> fileCache = new Dictionary<string, GameObject>();
 
-    [SerializeField]
-    PrefabCacheData[] bulletFiles;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        Prepare();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    [SerializeField] PrefabCacheData[] bulletFiles = null;
 
     public GameObject Load(string resourcePath)
     {
-        GameObject go = null;
+        GameObject go;
 
         if (fileCache.ContainsKey(resourcePath)) // 캐시 확인
         {
@@ -59,6 +46,12 @@ public class BulletManager : MonoBehaviour
 
     public Bullet Generate(int index)
     {
+        if (index < 0 || index >= bulletFiles.Length)
+        {
+            Debug.LogError("Generate error! out of range! index = " + index);
+            return null;
+        }
+
         string filePath = bulletFiles[index].filePath;
         GameObject go = SystemManager.Instance.BulletCacheSystem.Archive(filePath);
 
@@ -71,5 +64,10 @@ public class BulletManager : MonoBehaviour
     public bool Remove(Bullet bullet)
     {
         return SystemManager.Instance.BulletCacheSystem.Restore(bullet.FilePath, bullet.gameObject);
+    }
+
+    private void Start()
+    {
+        Prepare();
     }
 }

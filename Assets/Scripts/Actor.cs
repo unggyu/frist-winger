@@ -11,16 +11,16 @@ public class Actor : MonoBehaviour
     public bool IsDead => isDead;
     protected int CrashDamage => crashDamage;
 
-    public virtual void OnBulletHited(Actor attacker, int damage)
+    public virtual void OnBulletHited(Actor attacker, int damage, Vector3 hitPos)
     {
         Debug.Log("OnBulletHited damage = " + damage);
-        DecreaseHp(attacker, damage);
+        DecreaseHp(attacker, damage, hitPos);
     }
 
-    public virtual void OnCrash(Actor attacker, int damage)
+    public virtual void OnCrash(Actor attacker, int damage, Vector3 crashPos)
     {
         Debug.Log("OnCrash attacker = " + attacker.name + ", damage = " + damage);
-        DecreaseHp(attacker, damage);
+        DecreaseHp(attacker, damage, crashPos);
     }
 
     protected virtual void Initialize()
@@ -33,7 +33,7 @@ public class Actor : MonoBehaviour
 
     }
 
-    protected virtual void DecreaseHp(Actor attacker, int value)
+    protected virtual void DecreaseHp(Actor attacker, int value, Vector3 damagePos)
     {
         if (isDead)
         {

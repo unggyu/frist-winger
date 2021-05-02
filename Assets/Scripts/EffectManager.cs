@@ -6,15 +6,9 @@ public class EffectManager : MonoBehaviour
     public const int BulletDisappearFxIndex = 0;
     public const int ActorDeadFxIndex = 1;
 
-    [SerializeField]
-    PrefabCacheData[] effectFiles;
+    private readonly Dictionary<string, GameObject> fileCache = new Dictionary<string, GameObject>();
 
-    readonly Dictionary<string, GameObject> fileCache = new Dictionary<string, GameObject>();
-
-    private void Start()
-    {
-        Prepare();
-    }
+    [SerializeField] private PrefabCacheData[] effectFiles = null;
 
     public GameObject GenerateEffect(int index, Vector3 position)
     {
@@ -72,5 +66,10 @@ public class EffectManager : MonoBehaviour
     {
         SystemManager.Instance.EffectCacheSystem.Restore(effect.FilePath, effect.gameObject);
         return true;
+    }
+
+    private void Start()
+    {
+        Prepare();
     }
 }

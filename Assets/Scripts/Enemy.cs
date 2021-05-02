@@ -2,7 +2,7 @@
 
 public class Enemy : Actor
 {
-    public enum State : int
+    private enum State : int
     {
         /// <summary>
         /// 사용전
@@ -35,22 +35,37 @@ public class Enemy : Actor
         Disappear
     }
 
-    const float maxSpeed = 10.0f;
-    const float maxSpeedTime = 0.5f;
+    private const float maxSpeed = 10.0f;
+    private const float maxSpeedTime = 0.5f;
 
-    float lastBattleUpdateTime = 0.0f;
-    float moveStartTime = 0.0f;
-    Vector3 currentVelocity = Vector3.zero;
+    private float lastBattleUpdateTime = 0.0f;
+    private float moveStartTime = 0.0f;
+    private Vector3 currentVelocity = Vector3.zero;
 
-    [SerializeField] State currentState = State.None;
-    [SerializeField] Vector3 targetPosition = Vector3.zero;
-    [SerializeField] float currentSpeed = 0.0f;
-    [SerializeField] Transform fireTransform = null;
-    [SerializeField] float bulletSpeed = 1.0f;
-    [SerializeField] int fireRemainCount = 1;
-    [SerializeField] int gamePoint = 0;
+    [SerializeField] private State currentState = State.None;
+    [SerializeField] private Vector3 targetPosition = Vector3.zero;
+    [SerializeField] private float currentSpeed = 0.0f;
+    [SerializeField] private Transform fireTransform = null;
+    [SerializeField] private float bulletSpeed = 1.0f;
+    [SerializeField] private int fireRemainCount = 1;
+    [SerializeField] private int gamePoint = 0;
 
     public string FilePath { get; set; }
+
+    public void Appear(Vector3 targetPos)
+    {
+        targetPosition = targetPos;
+        currentSpeed = maxSpeed;
+
+        currentState = State.Appear;
+        moveStartTime = Time.time;
+    }
+
+    public void Fire()
+    {
+        Bullet bullet = SystemManager.Instance.BulletManager.Generate(BulletManager.EnemyBulletIndex);
+        bullet.Fire(OwnerSide.Enemy, fireTransform.position, -fireTransform.right, bulletSpeed, damage);
+    }
 
     protected override void UpdateActor()
     {
@@ -72,12 +87,30 @@ public class Enemy : Actor
         }
     }
 
-    void UpdateSpeed()
+    protected override void OnDead(Actor killer)
+    {
+        base.OnDead(killer);
+
+        SystemManager.Instance.GamePointAccumulator.Accumulate(gamePoint);
+        SystemManager.Instance.EnemyManager.RemoveEnemy(this);
+
+        currentState = State.Dead;
+    }
+
+    protected override void DecreaseHp(Actor attacker, int value, Vector3 damagePos)
+    {
+        base.DecreaseHp(attacker, value, damagePos);
+
+        Vector3 damagePoint = damagePos + Random.insideUnitSphere * 0.5f;
+        SystemManager.Instance.DamageManager.Generate(DamageManager.EnemyDamageIndex, damagePoint, value, Color.magenta);
+    }
+
+    private void UpdateSpeed()
     {
         currentSpeed = Mathf.Lerp(currentSpeed, maxSpeed, (Time.time - moveStartTime) / maxSpeedTime);
     }
 
-    void UpdateMove()
+    private void UpdateMove()
     {
         float distance = Vector3.Distance(targetPosition, transform.position);
         if (distance == 0f)
@@ -92,40 +125,7 @@ public class Enemy : Actor
         transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref currentVelocity, distance / currentSpeed, maxSpeed);
     }
 
-    void Arrived()
-    {
-        currentSpeed = 0f;
-
-        if (currentState == State.Appear)
-        {
-            currentState = State.Battle;
-            lastBattleUpdateTime = Time.time;
-        }
-        else // if (currentState == State.Disappear)
-        {
-            currentState = State.None;
-        }
-    }
-
-    public void Appear(Vector3 targetPos)
-    {
-        targetPosition = targetPos;
-        currentSpeed = maxSpeed;
-
-        currentState = State.Appear;
-        moveStartTime = Time.time;
-    }
-
-    void Disappear(Vector3 targetPos)
-    {
-        targetPosition = targetPos;
-        currentSpeed = 0f;
-
-        currentState = State.Disappear;
-        moveStartTime = Time.time;
-    }
-
-    void UpdateBattle()
+    private void UpdateBattle()
     {
         if (Time.time - lastBattleUpdateTime > 1.0f)
         {
@@ -144,28 +144,43 @@ public class Enemy : Actor
         }
     }
 
+    private void Arrived()
+    {
+        currentSpeed = 0f;
+
+        if (currentState == State.Appear)
+        {
+            currentState = State.Battle;
+            lastBattleUpdateTime = Time.time;
+        }
+        else // if (currentState == State.Disappear)
+        {
+            currentState = State.None;
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         Player player = other.GetComponentInParent<Player>();
         if (player)
         {
-            player.OnCrash(player, damage);
+            if (!player.IsDead)
+            {
+                BoxCollider box = ((BoxCollider)other);
+                Vector3 crashPos = player.transform.position + box.center;
+                crashPos.x += box.size.x * 0.5f;
+
+                player.OnCrash(player, damage, crashPos);
+            }
         }
     }
 
-    public void Fire()
+    private void Disappear(Vector3 targetPos)
     {
-        Bullet bullet = SystemManager.Instance.BulletManager.Generate(BulletManager.EnemyBulletIndex);
-        bullet.Fire(OwnerSide.Enemy, fireTransform.position, -fireTransform.right, bulletSpeed, damage);
-    }
+        targetPosition = targetPos;
+        currentSpeed = 0f;
 
-    protected override void OnDead(Actor killer)
-    {
-        base.OnDead(killer);
-
-        SystemManager.Instance.GamePointAccumulator.Accumulate(gamePoint);
-        SystemManager.Instance.EnemyManager.RemoveEnemy(this);
-
-        currentState = State.Dead;
+        currentState = State.Disappear;
+        moveStartTime = Time.time;
     }
 }

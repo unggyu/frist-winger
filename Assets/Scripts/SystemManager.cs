@@ -9,20 +9,24 @@ public class SystemManager : MonoBehaviour
     [SerializeField] private EffectManager effectManager = null;
     [SerializeField] private BulletManager bulletManager = null;
     [SerializeField] private EnemyManager enemyManager = null;
+    [SerializeField] private DamageManager damageManager = null;
 
-    private GamePointAccumulator gamePointAccumulator = new GamePointAccumulator();
-    private PrefabCacheSystem enemyCacheSystem = new PrefabCacheSystem();
-    private PrefabCacheSystem bulletCacheSystem = new PrefabCacheSystem();
-    private PrefabCacheSystem effectCacheSystem = new PrefabCacheSystem();
+    private readonly GamePointAccumulator gamePointAccumulator = new GamePointAccumulator();
+    private readonly PrefabCacheSystem enemyCacheSystem = new PrefabCacheSystem();
+    private readonly PrefabCacheSystem bulletCacheSystem = new PrefabCacheSystem();
+    private readonly PrefabCacheSystem effectCacheSystem = new PrefabCacheSystem();
+    private readonly PrefabCacheSystem damageCacheSystem = new PrefabCacheSystem();
 
     public Player Player => player;
     public EffectManager EffectManager => effectManager;
     public BulletManager BulletManager => bulletManager;
     public EnemyManager EnemyManager => enemyManager;
+    public DamageManager DamageManager => damageManager;
     public GamePointAccumulator GamePointAccumulator => gamePointAccumulator;
     public PrefabCacheSystem EnemyCacheSystem => enemyCacheSystem;
     public PrefabCacheSystem BulletCacheSystem => bulletCacheSystem;
     public PrefabCacheSystem EffectCacheSystem => effectCacheSystem;
+    public PrefabCacheSystem DamageCacheSystem => damageCacheSystem;
 
     private void Awake()
     {

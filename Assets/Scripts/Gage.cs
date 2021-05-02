@@ -3,20 +3,7 @@ using UnityEngine.UI;
 
 public class Gage : MonoBehaviour
 {
-    [SerializeField]
-    Slider slider;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    [SerializeField] Slider slider = null;
 
     public void SetHp(float currentValue, float maxValue)
     {

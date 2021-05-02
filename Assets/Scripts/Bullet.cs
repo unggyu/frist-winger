@@ -8,40 +8,18 @@ public enum OwnerSide : int
 
 public class Bullet : MonoBehaviour
 {
-    const float lifeTime = 15.0f;
-    OwnerSide ownerSide = OwnerSide.Player;
-    float firedTime = 0.0f;
-    bool needMove = false;
-    bool hited = false;
-    int damage = 1;
+    private const float lifeTime = 15.0f;
 
-    [SerializeField] Vector3 moveDirection = Vector3.zero;
-    [SerializeField] float speed = 0.0f;
+    private OwnerSide ownerSide = OwnerSide.Player;
+    private float firedTime = 0.0f;
+    private bool needMove = false;
+    private bool hited = false;
+    private int damage = 1;
+
+    [SerializeField] private Vector3 moveDirection = Vector3.zero;
+    [SerializeField] private float speed = 0.0f;
 
     public string FilePath { get; set; }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if (ProcessDisappearCondition())
-        {
-            return;
-        }
-
-        UpdateMove();
-    }
-
-    void UpdateMove()
-    {
-        if (!needMove)
-        {
-            return;
-        }
-
-        Vector3 moveVector = moveDirection.normalized * speed * Time.deltaTime;
-        moveVector = AdjustMove(moveVector);
-        transform.position += moveVector;
-    }
 
     public void Fire(OwnerSide ownerSide, Vector3 firePosition, Vector3 direction, float speed, int damage)
     {
@@ -55,7 +33,30 @@ public class Bullet : MonoBehaviour
         firedTime = Time.time;
     }
 
-    Vector3 AdjustMove(Vector3 moveVector)
+    // Update is called once per frame
+    private void Update()
+    {
+        if (ProcessDisappearCondition())
+        {
+            return;
+        }
+
+        UpdateMove();
+    }
+
+    private void UpdateMove()
+    {
+        if (!needMove)
+        {
+            return;
+        }
+
+        Vector3 moveVector = moveDirection.normalized * speed * Time.deltaTime;
+        moveVector = AdjustMove(moveVector);
+        transform.position += moveVector;
+    }
+
+    private Vector3 AdjustMove(Vector3 moveVector)
     {
         if (Physics.Linecast(transform.position, transform.position + moveVector, out RaycastHit hitInfo))
         {
@@ -66,7 +67,7 @@ public class Bullet : MonoBehaviour
         return moveVector;
     }
 
-    void OnBulletCollision(Collider collider)
+    private void OnBulletCollision(Collider collider)
     {
         if (hited)
         {
@@ -85,7 +86,7 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-        actor.OnBulletHited(actor, damage);
+        actor.OnBulletHited(actor, damage, transform.position);
 
         Collider myCollider = GetComponentInChildren<Collider>();
         myCollider.enabled = false;
@@ -103,7 +104,7 @@ public class Bullet : MonoBehaviour
         OnBulletCollision(other);
     }
 
-    bool ProcessDisappearCondition()
+    private bool ProcessDisappearCondition()
     {
         if (transform.position.x > 15.0f ||
             transform.position.x < -15.0f ||
@@ -122,7 +123,7 @@ public class Bullet : MonoBehaviour
         return false;
     }
 
-    void Disappear()
+    private void Disappear()
     {
         Destroy(gameObject);
     }

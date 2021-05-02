@@ -11,7 +11,7 @@ public class AutoCachableEffect : MonoBehaviour
         StartCoroutine(CheckIfAfter());
     }
 
-    IEnumerator CheckIfAfter()
+    private IEnumerator CheckIfAfter()
     {
         while (true)
         {
