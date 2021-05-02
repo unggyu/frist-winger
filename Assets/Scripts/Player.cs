@@ -8,7 +8,6 @@ public class Player : Actor
     [SerializeField] private Transform mainBGQuadTransform = null;
     [SerializeField] private Transform fireTransform = null;
     [SerializeField] private BoxCollider boxCollider = null;
-    [SerializeField] private Gage hpGage = null;
 
     public void ProcessInput(Vector3 moveDirection)
     {
@@ -24,7 +23,8 @@ public class Player : Actor
     protected override void Initialize()
     {
         base.Initialize();
-        hpGage.SetHp(currentHp, maxHp);
+        PlayerStatePanel playerStatePanel = PanelManager.GetPanel(typeof(PlayerStatePanel)) as PlayerStatePanel;
+        playerStatePanel.SetHp(currentHp, maxHp);
     }
 
     protected override void UpdateActor()
@@ -35,7 +35,8 @@ public class Player : Actor
     protected override void DecreaseHp(Actor attacker, int value)
     {
         base.DecreaseHp(attacker, value);
-        hpGage.SetHp(currentHp, maxHp);
+        PlayerStatePanel playerStatePanel = PanelManager.GetPanel(typeof(PlayerStatePanel)) as PlayerStatePanel;
+        playerStatePanel.SetHp(currentHp, maxHp);
     }
 
     protected override void OnDead(Actor killer)
