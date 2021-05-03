@@ -1,4 +1,4 @@
-index,filePath,maxHp,damage,crashDamage,bulletSpeed,fireRemainCount,gamePoint
+Index,FilePath,MaxHp,Damage,CrashDamage,BulletSpeed,FireRemainCount,GamePoint
 0,Prefabs/Enemy,100,10,100,5,1,5
 1,Prefabs/Enemy,100,15,100,5,1,6
 2,Prefabs/Enemy,100,20,100,5,1,7

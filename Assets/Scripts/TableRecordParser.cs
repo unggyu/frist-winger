@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
-public class MarshalTableContant
+public class MarshalTableConstant
 {
     public const int charBufferSize = 256;
 }
@@ -89,7 +89,7 @@ public class TableRecordParser<TMarshalStruct>
         }
         else if (typeof(string) == dataType)
         {
-            fieldByte = new byte[MarshalTableContant.charBufferSize];
+            fieldByte = new byte[MarshalTableConstant.charBufferSize];
             byte[] byteArr = Encoding.UTF8.GetBytes(splite);
             Buffer.BlockCopy(byteArr, 0, fieldByte, 0, byteArr.Length);
         }
