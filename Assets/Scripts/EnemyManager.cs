@@ -3,41 +3,22 @@ using UnityEngine;
 
 public class EnemyManager : MonoBehaviour
 {
+    private readonly List<Enemy> enemies = new List<Enemy>();
+
     [SerializeField] EnemyFactory enemyFactory = null;
     [SerializeField] PrefabCacheData[] enemyFiles = null;
 
-    List<Enemy> enemies = new List<Enemy>();
+    public List<Enemy> Enemies => enemies;
 
-    public List<Enemy> Enemies
+    public bool GenerateEnemy(EnemyGenerateData data)
     {
-        get => enemies;
-    }
+        GameObject go = SystemManager.Instance.EnemyCacheSystem.Archive(data.filePath);
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        Prepare();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.L))
-        {
-            GenerateEnemy(0, new Vector3(15.0f, 0.0f, 0.0f));
-        }
-    }
-
-    public bool GenerateEnemy(int index, Vector3 position)
-    {
-        string filePath = enemyFiles[index].filePath;
-        GameObject go = SystemManager.Instance.EnemyCacheSystem.Archive(filePath);
-
-        go.transform.position = position;
+        go.transform.position = data.generatePoint;
 
         Enemy enemy = go.GetComponent<Enemy>();
-        enemy.FilePath = filePath;
-        enemy.Appear(new Vector3(7.0f, 0.0f, 0.0f));
+        enemy.FilePath = data.filePath;
+        enemy.Reset(data);
 
         enemies.Add(enemy);
         return true;
@@ -64,5 +45,11 @@ public class EnemyManager : MonoBehaviour
             GameObject go = enemyFactory.Load(enemyFiles[i].filePath);
             SystemManager.Instance.EnemyCacheSystem.GenerateCache(enemyFiles[i].filePath, go, enemyFiles[i].cacheCount);
         }
+    }
+
+    // Start is called before the first frame update
+    private void Start()
+    {
+        Prepare();
     }
 }

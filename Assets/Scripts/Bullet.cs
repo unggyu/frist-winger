@@ -10,20 +10,20 @@ public class Bullet : MonoBehaviour
 {
     private const float lifeTime = 15.0f;
 
-    private OwnerSide ownerSide = OwnerSide.Player;
     private float firedTime = 0.0f;
     private bool needMove = false;
     private bool hited = false;
     private int damage = 1;
+    private Actor owner;
 
     [SerializeField] private Vector3 moveDirection = Vector3.zero;
     [SerializeField] private float speed = 0.0f;
 
     public string FilePath { get; set; }
 
-    public void Fire(OwnerSide ownerSide, Vector3 firePosition, Vector3 direction, float speed, int damage)
+    public void Fire(Actor owner, Vector3 firePosition, Vector3 direction, float speed, int damage)
     {
-        this.ownerSide = ownerSide;
+        this.owner = owner;
         transform.position = firePosition;
         moveDirection = direction;
         this.speed = speed;
@@ -81,7 +81,7 @@ public class Bullet : MonoBehaviour
         }
 
         Actor actor = collider.GetComponentInParent<Actor>();
-        if (actor && actor.IsDead)
+        if (actor && actor.IsDead || actor.gameObject.layer == owner.gameObject.layer)
         {
             return;
         }

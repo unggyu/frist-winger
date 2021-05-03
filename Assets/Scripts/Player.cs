@@ -17,7 +17,7 @@ public class Player : Actor
     public void Fire()
     {
         Bullet bullet = SystemManager.Instance.BulletManager.Generate(BulletManager.PlayerBulletIndex);
-        bullet.Fire(OwnerSide.Player, fireTransform.position, fireTransform.right, bulletSpeed, damage);
+        bullet.Fire(this, fireTransform.position, fireTransform.right, bulletSpeed, damage);
     }
 
     protected override void Initialize()

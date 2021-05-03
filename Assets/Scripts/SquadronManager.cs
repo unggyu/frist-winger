@@ -46,12 +46,19 @@ public class SquadronManager : MonoBehaviour
         {
             GenerateSquadron(squadronDatas[squadronIndex]);
             squadronIndex++;
+
+            if (squadronIndex >= squadronDatas.Length)
+            {
+                AllSquadronGenerated();
+                return;
+            }
         }
     }
 
     private void GenerateSquadron(SquadronData data)
     {
         Debug.Log("GenerateSquadron");
+        data.squadron.GenerateAllData();
     }
 
     private void AllSquadronGenerated()
