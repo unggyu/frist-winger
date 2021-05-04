@@ -10,6 +10,7 @@ public class SystemManager : MonoBehaviour
     [SerializeField] private BulletManager bulletManager = null;
     [SerializeField] private EnemyManager enemyManager = null;
     [SerializeField] private DamageManager damageManager = null;
+    [SerializeField] private EnemyTable enemyTable = null;
 
     private readonly GamePointAccumulator gamePointAccumulator = new GamePointAccumulator();
     private readonly PrefabCacheSystem enemyCacheSystem = new PrefabCacheSystem();
@@ -22,6 +23,7 @@ public class SystemManager : MonoBehaviour
     public BulletManager BulletManager => bulletManager;
     public EnemyManager EnemyManager => enemyManager;
     public DamageManager DamageManager => damageManager;
+    public EnemyTable EnemyTable => enemyTable;
     public GamePointAccumulator GamePointAccumulator => gamePointAccumulator;
     public PrefabCacheSystem EnemyCacheSystem => enemyCacheSystem;
     public PrefabCacheSystem BulletCacheSystem => bulletCacheSystem;

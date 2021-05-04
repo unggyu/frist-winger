@@ -1,12 +1,5 @@
 ﻿using UnityEngine;
 
-[System.Serializable]
-public class SquadronData
-{
-    public float squadronGenerateTime;
-    public Squadron squadron;
-}
-
 public class SquadronManager : MonoBehaviour
 {
     private float gameStartedTime;
@@ -14,7 +7,10 @@ public class SquadronManager : MonoBehaviour
     private bool running = false;
 
     [SerializeField]
-    private SquadronData[] squadronDatas = null;
+    private SquadronTable[] squadronDatas = null;
+
+    [SerializeField]
+    private SquadronScheduleTable squadronScheduleTable = null;
 
     public void StartGame()
     {
@@ -22,6 +18,17 @@ public class SquadronManager : MonoBehaviour
         squadronIndex = 0;
         running = true;
         Debug.Log("Game Started!");
+    }
+
+    private void Start()
+    {
+        squadronDatas = GetComponentsInChildren<SquadronTable>();
+        for (int i = 0; i < squadronDatas.Length; i++)
+        {
+            squadronDatas[i].Load();
+        }
+
+        squadronScheduleTable.Load();
     }
 
     // Update is called once per frame
@@ -42,7 +49,7 @@ public class SquadronManager : MonoBehaviour
             return;
         }
 
-        if (Time.time - gameStartedTime >= squadronDatas[squadronIndex].squadronGenerateTime)
+        if (Time.time - gameStartedTime >= squadronScheduleTable.GetScheduleData(squadronIndex).GenerateTime)
         {
             GenerateSquadron(squadronDatas[squadronIndex]);
             squadronIndex++;
@@ -55,10 +62,16 @@ public class SquadronManager : MonoBehaviour
         }
     }
 
-    private void GenerateSquadron(SquadronData data)
+    private void GenerateSquadron(SquadronTable table)
     {
         Debug.Log("GenerateSquadron");
-        data.squadron.GenerateAllData();
+        // data.squadron.GenerateAllData();
+
+        for (int i = 0; i < table.GetCount(); i++)
+        {
+            SquadronMemberStruct squadronMember = table.GetSquadronMember(i);
+            SystemManager.Instance.EnemyManager.GenerateEnemy(squadronMember);
+        }
     }
 
     private void AllSquadronGenerated()

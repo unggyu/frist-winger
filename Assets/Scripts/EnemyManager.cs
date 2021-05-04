@@ -10,14 +10,15 @@ public class EnemyManager : MonoBehaviour
 
     public List<Enemy> Enemies => enemies;
 
-    public bool GenerateEnemy(EnemyGenerateData data)
+    public bool GenerateEnemy(SquadronMemberStruct data)
     {
-        GameObject go = SystemManager.Instance.EnemyCacheSystem.Archive(data.filePath);
+        string filePath = SystemManager.Instance.EnemyTable.GetEnemy(data.EnemyId).FilePath;
+        GameObject go = SystemManager.Instance.EnemyCacheSystem.Archive(filePath);
 
-        go.transform.position = data.generatePoint;
+        go.transform.position = new Vector3(data.GeneratePointX, data.GeneratePointY, 0);
 
         Enemy enemy = go.GetComponent<Enemy>();
-        enemy.FilePath = data.filePath;
+        enemy.FilePath = filePath;
         enemy.Reset(data);
 
         enemies.Add(enemy);

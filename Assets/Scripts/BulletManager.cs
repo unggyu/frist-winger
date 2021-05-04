@@ -10,8 +10,26 @@ public class BulletManager : MonoBehaviour
 
     [SerializeField] PrefabCacheData[] bulletFiles = null;
 
+    public Bullet Generate(int index)
+    {
+        if (index < 0 || index >= bulletFiles.Length)
+        {
+            Debug.LogError("Generate error! out of range! index = " + index);
+            return null;
+        }
+
+        string filePath = bulletFiles[index].filePath;
+        GameObject go = SystemManager.Instance.BulletCacheSystem.Archive(filePath);
+
+        Bullet bullet = go.GetComponent<Bullet>();
+        bullet.FilePath = filePath;
+
+        return bullet;
+    }
+
     public GameObject Load(string resourcePath)
     {
+        Debug.Log("Bullet load. resourcePath = " + resourcePath);
         GameObject go;
 
         if (fileCache.ContainsKey(resourcePath)) // 캐시 확인
@@ -42,23 +60,6 @@ public class BulletManager : MonoBehaviour
             GameObject go = Load(bulletFiles[i].filePath);
             SystemManager.Instance.BulletCacheSystem.GenerateCache(bulletFiles[i].filePath, go, bulletFiles[i].cacheCount);
         }
-    }
-
-    public Bullet Generate(int index)
-    {
-        if (index < 0 || index >= bulletFiles.Length)
-        {
-            Debug.LogError("Generate error! out of range! index = " + index);
-            return null;
-        }
-
-        string filePath = bulletFiles[index].filePath;
-        GameObject go = SystemManager.Instance.BulletCacheSystem.Archive(filePath);
-
-        Bullet bullet = go.GetComponent<Bullet>();
-        bullet.FilePath = filePath;
-
-        return bullet;
     }
 
     public bool Remove(Bullet bullet)

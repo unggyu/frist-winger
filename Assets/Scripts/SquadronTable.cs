@@ -8,12 +8,12 @@ public struct SquadronMemberStruct
 {
     public int Index;
     public int EnemyId;
-    public int GeneratePointX;
-    public int GeneratePointY;
-    public int AppearPointX;
-    public int AppearPointY;
-    public int DisappearPointX;
-    public int DisappearPointY;
+    public float GeneratePointX;
+    public float GeneratePointY;
+    public float AppearPointX;
+    public float AppearPointY;
+    public float DisappearPointX;
+    public float DisappearPointY;
 }
 
 public class SquadronTable : TableLoader<SquadronMemberStruct>
@@ -29,6 +29,11 @@ public class SquadronTable : TableLoader<SquadronMemberStruct>
         }
 
         return tableDatas[index];
+    }
+
+    public int GetCount()
+    {
+        return tableDatas.Count;
     }
 
     protected override void AddData(SquadronMemberStruct data)

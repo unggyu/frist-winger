@@ -77,17 +77,19 @@ public class Enemy : Actor
         bullet.Fire(this, fireTransform.position, -fireTransform.right, bulletSpeed, damage);
     }
 
-    public void Reset(EnemyGenerateData data)
+    public void Reset(SquadronMemberStruct data)
     {
-        currentHp = maxHp = data.maxHp;
-        damage = data.damage;
-        crashDamage = data.crashDamage;
-        bulletSpeed = data.bulletSpeed;
-        fireRemainCount = data.fireRemainCount;
-        gamePoint = data.gamePoint;
+        EnemyStruct enemyStruct = SystemManager.Instance.EnemyTable.GetEnemy(data.EnemyId);
 
-        appearPoint = data.appearPoint;
-        disappearPoint = data.disappearPoint;
+        currentHp = maxHp = enemyStruct.MaxHp; // currentHp까지 다시 입력
+        damage = enemyStruct.Damage; // 총알 데미지
+        crashDamage = enemyStruct.CrashDamage; // 충돌 데미지
+        bulletSpeed = enemyStruct.BulletSpeed; // 총알 속도
+        fireRemainCount = enemyStruct.FireRemainCount; // 발사할 총알 갯수
+        gamePoint = enemyStruct.GamePoint; // 파괴 시 얻을 점수
+
+        appearPoint = new Vector3(data.AppearPointX, data.AppearPointY, 0); // 입장 시 도착
+        disappearPoint = new Vector3(data.DisappearPointX, data.DisappearPointY, 0); // 퇴장 시 목표
 
         currentState = State.Ready;
         lastActionUpdateTime = Time.time;

@@ -125,6 +125,6 @@ public class Bullet : MonoBehaviour
 
     private void Disappear()
     {
-        Destroy(gameObject);
+        SystemManager.Instance.BulletManager.Remove(this);
     }
 }

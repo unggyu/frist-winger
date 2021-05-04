@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using UnityEngine;
 
 public class MarshalTableConstant
 {
@@ -18,7 +19,7 @@ public class TableRecordParser<TMarshalStruct>
     /// <returns>변환된 T형 구조체</returns>
     public static T MakeStructFromBytes<T>(byte[] bytes)
     {
-        int size = Marshal.SizeOf(bytes);
+        int size = Marshal.SizeOf(typeof(T));
         IntPtr ptr = Marshal.AllocHGlobal(size); // 마샬 메모리 할당
 
         Marshal.Copy(bytes, 0, ptr, size); // 복사
