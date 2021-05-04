@@ -5,5 +5,7 @@ public class TitleSceneMain : BaseSceneMain
     public void OnStartButton()
     {
         Debug.Log("OnStartButton");
+
+        SceneController.Instance.LoadScene(SceneNameConstants.LoadingScene);
     }
 }
