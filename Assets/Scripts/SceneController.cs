@@ -86,6 +86,10 @@ public class SceneController : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
     {
         Debug.Log("OnSceneLoaded is called! scene = " + scene.name + ", loadSceneMode = " + loadSceneMode.ToString());
+
+        BaseSceneMain baseSceneMain = FindObjectOfType<BaseSceneMain>();
+        Debug.Log("OnSceneLoaded! baseSceneMain.name = " + baseSceneMain.name);
+        SystemManager.Instance.CurrentSceneMain = baseSceneMain;
     }
 
     private void OnSceneUnloaded(Scene scene)

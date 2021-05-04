@@ -2,20 +2,14 @@
 
 public class InputController : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
         UpdateInput();
         UpdateMouse();
     }
 
-    void UpdateInput()
+    private void UpdateInput()
     {
         Vector3 moveDirection = Vector3.zero;
 
@@ -23,27 +17,34 @@ public class InputController : MonoBehaviour
         {
             moveDirection.y = 1;
         }
+
         if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
         {
             moveDirection.y = -1;
         }
+
         if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
         {
             moveDirection.x = -1;
         }
+
         if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
         {
             moveDirection.x = 1;
         }
 
-        SystemManager.Instance.Player.ProcessInput(moveDirection);
+        SystemManager
+            .Instance
+            .GetCurrentSceneMain<InGameSceneMain>()
+            .Player
+            .ProcessInput(moveDirection);
     }
 
-    void UpdateMouse()
+    private void UpdateMouse()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            SystemManager.Instance.Player.Fire();
+            SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().Player.Fire();
         }
     }
 }

@@ -18,7 +18,7 @@ public class AutoCachableEffect : MonoBehaviour
             yield return new WaitForSeconds(0.5f);
             if (!GetComponent<ParticleSystem>().IsAlive(true))
             {
-                SystemManager.Instance.EffectManager.RemoveEffect(this);
+                SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().EffectManager.RemoveEffect(this);
                 break;
             }
         }

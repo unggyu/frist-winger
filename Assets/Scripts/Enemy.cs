@@ -73,7 +73,12 @@ public class Enemy : Actor
 
     public void Fire()
     {
-        Bullet bullet = SystemManager.Instance.BulletManager.Generate(BulletManager.EnemyBulletIndex);
+        Bullet bullet = SystemManager
+            .Instance
+            .GetCurrentSceneMain<InGameSceneMain>()
+            .BulletManager
+            .Generate(BulletManager.EnemyBulletIndex);
+
         bullet.Fire(this, fireTransform.position, -fireTransform.right, bulletSpeed, damage);
     }
 
@@ -121,8 +126,8 @@ public class Enemy : Actor
     {
         base.OnDead(killer);
 
-        SystemManager.Instance.GamePointAccumulator.Accumulate(gamePoint);
-        SystemManager.Instance.EnemyManager.RemoveEnemy(this);
+        SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().GamePointAccumulator.Accumulate(gamePoint);
+        SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().EnemyManager.RemoveEnemy(this);
 
         currentState = State.Dead;
     }
@@ -132,7 +137,11 @@ public class Enemy : Actor
         base.DecreaseHp(attacker, value, damagePos);
 
         Vector3 damagePoint = damagePos + Random.insideUnitSphere * 0.5f;
-        SystemManager.Instance.DamageManager.Generate(DamageManager.EnemyDamageIndex, damagePoint, value, Color.magenta);
+        SystemManager
+            .Instance
+            .GetCurrentSceneMain<InGameSceneMain>()
+            .DamageManager
+            .Generate(DamageManager.EnemyDamageIndex, damagePoint, value, Color.magenta);
     }
 
     private void UpdateReady()
