@@ -1,21 +1,21 @@
 ﻿using UnityEngine;
 
-public class InputController : MonoBehaviour
+public class InputController
 {
-    // Update is called once per frame
-    private void Update()
+    public void UpdateInput()
     {
         // 게임 실행 중에만 사용자 입력을 받을 수 있도록 처리
-        if (SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().CurrentGameState != InGameSceneMain.GameState.Running)
+        if (SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>() == null ||
+            SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().CurrentGameState != InGameSceneMain.GameState.Running)
         {
             return;
         }
 
-        UpdateInput();
+        UpdateKeyboard();
         UpdateMouse();
     }
 
-    private void UpdateInput()
+    private void UpdateKeyboard()
     {
         Vector3 moveDirection = Vector3.zero;
 

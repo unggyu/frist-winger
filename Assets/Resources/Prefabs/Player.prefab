@@ -136,7 +136,7 @@ MonoBehaviour:
   damage: 100
   crashDamage: 100
   isDead: 0
-  speed: 1
+  speed: 5
   bulletSpeed: 10
   moveVector:
     m_InternalValue: {x: 0, y: 0, z: 0}

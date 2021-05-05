@@ -8,6 +8,7 @@ public class SystemManager : MonoBehaviour
     private BaseSceneMain currentSceneMain;
 
     [SerializeField] private EnemyTable enemyTable = null;
+    [SerializeField] private NetworkConnectionInfo connectionInfo = null;
 
     public BaseSceneMain CurrentSceneMain
     {
@@ -21,7 +22,9 @@ public class SystemManager : MonoBehaviour
             }
         }
     }
+
     public EnemyTable EnemyTable => enemyTable;
+    public NetworkConnectionInfo ConnectionInfo => connectionInfo;
 
     public event System.EventHandler<string> CurrentSceneMainChanged;
 

@@ -1,5 +1,6 @@
 using MLAPI;
 using MLAPI.SceneManagement;
+using MLAPI.Transports.UNET;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,6 +16,7 @@ public class LoadingSceneMain : BaseSceneMain
     private bool nextSceneCall = false;
 
     [SerializeField] Text loadingText = null;
+    [SerializeField] UNetTransport unetTransport = null;
 
     protected override void OnStart()
     {
@@ -51,8 +53,37 @@ public class LoadingSceneMain : BaseSceneMain
 
     private void GotoNextScene()
     {
-        NetworkManager.Singleton.StartHost();
-        NetworkSceneManager.SwitchScene(SceneNameConstants.InGame);
+        NetworkConnectionInfo info = SystemManager.Instance.ConnectionInfo;
+        if (info.host)
+        {
+            Debug.Log("FW Start with host!");
+            NetworkManager.Singleton.StartHost();
+        }
+        else
+        {
+            Debug.Log("FW Start with client!");
+
+            if (!string.IsNullOrWhiteSpace(info.ipAddress))
+            {
+                if (info.ipAddress.Equals("localhost"))
+                {
+                    info.ipAddress = "127.0.0.1";
+                }
+                unetTransport.ConnectAddress = info.ipAddress;
+            }
+
+            if (info.port != unetTransport.ConnectPort)
+            {
+                unetTransport.ConnectPort = info.port;
+            }
+
+            NetworkManager.Singleton.StartClient();
+        }
+
+        if (NetworkManager.Singleton.IsServer)
+        {
+            NetworkSceneManager.SwitchScene(SceneNameConstants.InGame);
+        }
         nextSceneCall = true;
     }
 }

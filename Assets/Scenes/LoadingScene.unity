@@ -232,6 +232,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   loadingText: {fileID: 530556614}
+  unetTransport: {fileID: 1650110595}
 --- !u!4 &740902980
 Transform:
   m_ObjectHideFlags: 0

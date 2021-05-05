@@ -1,11 +1,12 @@
-using UnityEngine;
-
 public class TitleSceneMain : BaseSceneMain
 {
     public void OnStartButton()
     {
-        Debug.Log("OnStartButton");
+        PanelManager.GetPanel(typeof(NetworkConfigPanel)).Show();
+    }
 
+    public void GoToNextScene()
+    {
         SceneController.Instance.LoadScene(SceneNameConstants.LoadingScene);
     }
 }

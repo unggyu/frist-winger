@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class Player : Actor
 {
+    private readonly InputController inputController = new InputController();
+
     [SerializeField] private float speed = 1.0f;
     [SerializeField] private float bulletSpeed = 1.0f;
     [SerializeField] private NetworkVariable<Vector3> moveVector = new NetworkVariable<Vector3>(Vector3.zero);
@@ -26,6 +28,14 @@ public class Player : Actor
             .Generate(BulletManager.PlayerBulletIndex);
 
         bullet.Fire(this, fireTransform.position, fireTransform.right, bulletSpeed, damage);
+    }
+
+    public void UpdateClientInput()
+    {
+        if (IsClient)
+        {
+            inputController.UpdateInput();
+        }
     }
 
     protected override void Initialize()
@@ -97,6 +107,7 @@ public class Player : Actor
 
     private void Update()
     {
+        UpdateClientInput();
         UpdateMove();
     }
 
@@ -107,9 +118,27 @@ public class Player : Actor
             return;
         }
 
-        moveVector.Value = AdjustMoveVector(moveVector.Value);
+        if (IsServer)
+        {
+            // Host 플레이어인 경우 클라이언트에게 RPC로 보냄
+            MoveClientRpc(moveVector.Value);
+        }
+        else
+        {
+            // Client 플레리어인 경우 서버에게 RPC로 보내고
+            // Self 동작 수행
+            MoveServerRpc(moveVector.Value);
+            if (IsLocalPlayer)
+            {
+                transform.position += AdjustMoveVector(moveVector.Value);
+            }
+        }
+    }
 
-        MoveServerRpc(moveVector.Value);
+    private void Move(Vector3 moveVector)
+    {
+        this.moveVector.Value = moveVector;
+        transform.position += moveVector;
     }
 
     [ServerRpc]
@@ -117,7 +146,15 @@ public class Player : Actor
     {
         this.moveVector.Value = moveVector;
         transform.position += moveVector;
-        // SetDirtyBit(1);
+        this.moveVector.Value = Vector3.zero;
+    }
+
+    [ClientRpc]
+    private void MoveClientRpc(Vector3 moveVector)
+    {
+        this.moveVector.Value = moveVector;
+        transform.position += moveVector;
+        this.moveVector.Value = Vector3.zero;
     }
 
     private void OnTriggerEnter(Collider other)

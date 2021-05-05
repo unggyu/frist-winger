@@ -71,7 +71,7 @@ public class InGameSceneMain : BaseSceneMain
         {
             if (currentTime - sceneStartTime > gameReadyInterval)
             {
-                SquadronManager.StartGame();
+                // SquadronManager.StartGame();
                 currentGameState = GameState.Running;
             }
         }
