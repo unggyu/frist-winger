@@ -21,6 +21,7 @@ public class InGameSceneMain : BaseSceneMain
     private float sceneStartTime;
 
     [SerializeField] private Player player = null;
+    [SerializeField] private Transform mainBGQuadTransform = null;
     [SerializeField] private EffectManager effectManager = null;
     [SerializeField] private BulletManager bulletManager = null;
     [SerializeField] private EnemyManager enemyManager = null;
@@ -40,8 +41,10 @@ public class InGameSceneMain : BaseSceneMain
 
             return player;
         }
+        set => player = value;
     }
 
+    public Transform MainBGQuadTransform => mainBGQuadTransform;
     public GamePointAccumulator GamePointAccumulator => gamePointAccumulator;
     public PrefabCacheSystem EnemyCacheSystem => enemyCacheSystem;
     public PrefabCacheSystem BulletCacheSystem => bulletCacheSystem;

@@ -5,10 +5,25 @@ public class SystemManager : MonoBehaviour
     private static SystemManager instance = null;
     public static SystemManager Instance => instance;
 
+    private BaseSceneMain currentSceneMain;
+
     [SerializeField] private EnemyTable enemyTable = null;
 
-    public BaseSceneMain CurrentSceneMain { get; set; }
+    public BaseSceneMain CurrentSceneMain
+    {
+        get => currentSceneMain;
+        set
+        {
+            currentSceneMain = value;
+            if (value != null)
+            {
+                CurrentSceneMainChanged?.Invoke(this, value.name);
+            }
+        }
+    }
     public EnemyTable EnemyTable => enemyTable;
+
+    public event System.EventHandler<string> CurrentSceneMainChanged;
 
     public T GetCurrentSceneMain<T>() where T : BaseSceneMain
     {

@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using MLAPI;
+using UnityEngine;
 
-public class Actor : MonoBehaviour
+public class Actor : NetworkBehaviour
 {
     [SerializeField] protected int maxHp = 100;
     [SerializeField] protected int currentHp;

@@ -1,17 +1,20 @@
-﻿using UnityEngine;
+﻿using MLAPI;
+using MLAPI.Messaging;
+using MLAPI.NetworkVariable;
+using UnityEngine;
 
 public class Player : Actor
 {
     [SerializeField] private float speed = 1.0f;
     [SerializeField] private float bulletSpeed = 1.0f;
-    [SerializeField] private Vector3 moveVector = Vector3.zero;
-    [SerializeField] private Transform mainBGQuadTransform = null;
+    [SerializeField] private NetworkVariable<Vector3> moveVector = new NetworkVariable<Vector3>(Vector3.zero);
     [SerializeField] private Transform fireTransform = null;
     [SerializeField] private BoxCollider boxCollider = null;
+    [SerializeField] private NetworkObject networkObject = null;
 
     public void ProcessInput(Vector3 moveDirection)
     {
-        moveVector = moveDirection * speed * Time.deltaTime;
+        moveVector.Value = moveDirection * speed * Time.deltaTime;
     }
 
     public void Fire()
@@ -28,8 +31,16 @@ public class Player : Actor
     protected override void Initialize()
     {
         base.Initialize();
-        PlayerStatePanel playerStatePanel = PanelManager.GetPanel(typeof(PlayerStatePanel)) as PlayerStatePanel;
-        playerStatePanel.SetHp(currentHp, maxHp);
+
+        InGameSceneMain sceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
+        if (sceneMain != null)
+        {
+            InitializePrivate();
+        }
+        else
+        {
+            SystemManager.Instance.CurrentSceneMainChanged += CurrentSceneMainChanged;
+        }
     }
 
     protected override void UpdateActor()
@@ -57,6 +68,33 @@ public class Player : Actor
         gameObject.SetActive(false);
     }
 
+    private void CurrentSceneMainChanged(object sender, string sceneName)
+    {
+        Debug.Log("CurrentSceneMainChanged sceneName = " + sceneName);
+
+        if (sceneName.Equals(nameof(InGameSceneMain)))
+        {
+            InitializePrivate();
+        }
+
+        SystemManager.Instance.CurrentSceneMainChanged -= CurrentSceneMainChanged;
+    }
+
+    private void InitializePrivate()
+    {
+        InGameSceneMain sceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
+        if (sceneMain != null)
+        {
+            PlayerStatePanel playerStatePanel = PanelManager.GetPanel(typeof(PlayerStatePanel)) as PlayerStatePanel;
+            playerStatePanel.SetHp(currentHp, maxHp);
+
+            if (IsLocalPlayer)
+            {
+                SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().Player = this;
+            }
+        }
+    }
+
     private void Update()
     {
         UpdateMove();
@@ -64,14 +102,22 @@ public class Player : Actor
 
     private void UpdateMove()
     {
-        if (moveVector.sqrMagnitude == 0)
+        if (moveVector.Value.sqrMagnitude == 0)
         {
             return;
         }
 
-        moveVector = AdjustMoveVector(moveVector);
+        moveVector.Value = AdjustMoveVector(moveVector.Value);
 
+        MoveServerRpc(moveVector.Value);
+    }
+
+    [ServerRpc]
+    private void MoveServerRpc(Vector3 moveVector)
+    {
+        this.moveVector.Value = moveVector;
         transform.position += moveVector;
+        // SetDirtyBit(1);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -92,6 +138,7 @@ public class Player : Actor
 
     private Vector3 AdjustMoveVector(Vector3 moveVector)
     {
+        Transform mainBGQuadTransform = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().MainBGQuadTransform;
         Vector3 result = boxCollider.transform.position + boxCollider.center + moveVector;
 
         if (result.x - boxCollider.size.x * 0.5f < -mainBGQuadTransform.localScale.x * 0.5f)

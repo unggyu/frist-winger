@@ -3,11 +3,10 @@ using UnityEngine.UI;
 
 public class PlayerStatePanel : BasePanel
 {
-    [SerializeField]
-    Text scoreText = null;
+    public static event System.EventHandler Initialized;
 
-    [SerializeField]
-    Gage hpGage = null;
+    [SerializeField] private Text scoreText = null;
+    [SerializeField] private Gage hpGage = null;
 
     public void SetScore(int value)
     {
@@ -19,5 +18,12 @@ public class PlayerStatePanel : BasePanel
     public void SetHp(float currentValue, float maxValue)
     {
         hpGage.SetHp(currentValue, maxValue);
+    }
+
+    public override void InitializePanel()
+    {
+        base.InitializePanel();
+
+        Initialized?.Invoke(this, System.EventArgs.Empty);
     }
 }
