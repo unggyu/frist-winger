@@ -1,3 +1,5 @@
+using MLAPI;
+using MLAPI.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -49,7 +51,9 @@ public class LoadingSceneMain : BaseSceneMain
 
     private void GotoNextScene()
     {
-        SceneController.Instance.LoadScene(SceneNameConstants.InGame);
+        // SceneController.Instance.LoadScene(SceneNameConstants.InGame);
+        NetworkManager.Singleton.StartHost();
+        NetworkSceneManager.SwitchScene(SceneNameConstants.InGame);
         nextSceneCall = true;
     }
 }
