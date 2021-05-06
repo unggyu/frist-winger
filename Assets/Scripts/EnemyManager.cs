@@ -52,11 +52,15 @@ public class EnemyManager : MonoBehaviour
         for (int i = 0; i < enemyFiles.Length; i++)
         {
             GameObject go = enemyFactory.Load(enemyFiles[i].filePath);
-            SystemManager
-                .Instance
-                .GetCurrentSceneMain<InGameSceneMain>()
-                .EnemyCacheSystem
-                .GenerateCache(enemyFiles[i].filePath, go, enemyFiles[i].cacheCount);
+            InGameSceneMain inGameSceneMain;
+            if ((inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>()) != null)
+            {
+                inGameSceneMain.EnemyCacheSystem.GenerateCache(enemyFiles[i].filePath, go, enemyFiles[i].cacheCount, transform);
+            }
+            else
+            {
+                Debug.LogError("Enemy prepare Error! inGameSceneMain is null");
+            }
         }
     }
 

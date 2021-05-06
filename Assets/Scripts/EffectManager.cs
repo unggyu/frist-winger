@@ -63,11 +63,15 @@ public class EffectManager : MonoBehaviour
         for (int i = 0; i < effectFiles.Length; i++)
         {
             GameObject go = Load(effectFiles[i].filePath);
-            SystemManager
-                .Instance
-                .GetCurrentSceneMain<InGameSceneMain>()
-                .EffectCacheSystem
-                .GenerateCache(effectFiles[i].filePath, go, effectFiles[i].cacheCount);
+            InGameSceneMain inGameSceneMain;
+            if ((inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>()) != null)
+            {
+                inGameSceneMain.EffectCacheSystem.GenerateCache(effectFiles[i].filePath, go, effectFiles[i].cacheCount, transform);
+            }
+            else
+            {
+                Debug.LogError("Effect prepare Error! inGameSceneMain is null");
+            }
         }
     }
 

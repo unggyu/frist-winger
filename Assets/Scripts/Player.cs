@@ -1,4 +1,5 @@
-﻿using MLAPI;
+﻿// #define NETWORK_BEHAVIOUR // 정상적으로 NetworkBehaviour 인스턴스의 Update로 호출되어 실행되고 있을 때
+#define MONO_BEHAVIOUR // MohoBehaviour 인스턴스의 Update로 호출되어 실행되고 있을 때
 using MLAPI.Messaging;
 using MLAPI.NetworkVariable;
 using UnityEngine;
@@ -9,10 +10,9 @@ public class Player : Actor
 
     [SerializeField] private float speed = 1.0f;
     [SerializeField] private float bulletSpeed = 1.0f;
-    [SerializeField] private NetworkVariable<Vector3> moveVector = new NetworkVariable<Vector3>(Vector3.zero);
+    [SerializeField] private NetworkVariable<Vector3> moveVector = new NetworkVariable<Vector3>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, Vector3.zero);
     [SerializeField] private Transform fireTransform = null;
     [SerializeField] private BoxCollider boxCollider = null;
-    [SerializeField] private NetworkObject networkObject = null;
 
     public void ProcessInput(Vector3 moveDirection)
     {
@@ -42,8 +42,8 @@ public class Player : Actor
     {
         base.Initialize();
 
-        InGameSceneMain sceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
-        if (sceneMain != null)
+        InGameSceneMain sceneMain;
+        if ((sceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>()) != null)
         {
             InitializePrivate();
         }
@@ -92,17 +92,27 @@ public class Player : Actor
 
     private void InitializePrivate()
     {
-        InGameSceneMain sceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
-        if (sceneMain != null)
-        {
-            PlayerStatePanel playerStatePanel = PanelManager.GetPanel(typeof(PlayerStatePanel)) as PlayerStatePanel;
-            playerStatePanel.SetHp(currentHp, maxHp);
+        PlayerStatePanel playerStatePanel = PanelManager.GetPanel(typeof(PlayerStatePanel)) as PlayerStatePanel;
+        playerStatePanel.SetHp(currentHp, maxHp);
 
-            if (IsLocalPlayer)
-            {
-                SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().Player = this;
-            }
+        InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
+
+        if (IsLocalPlayer)
+        {
+            inGameSceneMain.Player = this;
         }
+
+        Transform startTransform;
+        if (IsServer)
+        {
+            startTransform = inGameSceneMain.PlayerStartTransform1;
+        }
+        else
+        {
+            startTransform = inGameSceneMain.PlayerStartTransform2;
+        }
+
+        SetPosition(startTransform.position);
     }
 
     private void Update()
@@ -118,6 +128,9 @@ public class Player : Actor
             return;
         }
 
+#if NETWORK_BEHAVIOUR
+        MoveServerRpc(moveVector.Value);
+#elif MONO_BEHAVIOUR
         if (IsServer)
         {
             // Host 플레이어인 경우 클라이언트에게 RPC로 보냄
@@ -133,12 +146,33 @@ public class Player : Actor
                 transform.position += AdjustMoveVector(moveVector.Value);
             }
         }
+#endif
     }
 
     private void Move(Vector3 moveVector)
     {
         this.moveVector.Value = moveVector;
         transform.position += moveVector;
+    }
+
+    private void SetPosition(Vector3 position)
+    {
+#if NETWORK_BEHAVIOUR
+        SetPositionServerRpc(position);
+#elif MONO_BEHAVIOUR
+        if (IsServer)
+        {
+            SetPositionClientRpc(position);
+        }
+        else
+        {
+            SetPositionServerRpc(position);
+            if (IsLocalPlayer)
+            {
+                transform.position = position;
+            }
+        }
+#endif
     }
 
     [ServerRpc]
@@ -155,6 +189,18 @@ public class Player : Actor
         this.moveVector.Value = moveVector;
         transform.position += moveVector;
         this.moveVector.Value = Vector3.zero;
+    }
+
+    [ServerRpc]
+    private void SetPositionServerRpc(Vector3 position)
+    {
+        transform.position = position;
+    }
+
+    [ClientRpc]
+    private void SetPositionClientRpc(Vector3 position)
+    {
+        transform.position = position;
     }
 
     private void OnTriggerEnter(Collider other)

@@ -1,15 +1,9 @@
+using MLAPI;
 using UnityEngine;
 
 public class InGameSceneMain : BaseSceneMain
 {
-    public enum GameState : int
-    {
-        Ready = 0,
-        Running,
-        End
-    }
-
-    private const float gameReadyInterval = 3.0f;
+    public const int waitingPlayerCount = 2;
 
     private readonly GamePointAccumulator gamePointAccumulator = new GamePointAccumulator();
     private readonly PrefabCacheSystem enemyCacheSystem = new PrefabCacheSystem();
@@ -17,8 +11,7 @@ public class InGameSceneMain : BaseSceneMain
     private readonly PrefabCacheSystem effectCacheSystem = new PrefabCacheSystem();
     private readonly PrefabCacheSystem damageCacheSystem = new PrefabCacheSystem();
 
-    private GameState currentGameState = GameState.Ready;
-    private float sceneStartTime;
+    private int playerCount = 1;
 
     [SerializeField] private Player player = null;
     [SerializeField] private Transform mainBGQuadTransform = null;
@@ -27,8 +20,9 @@ public class InGameSceneMain : BaseSceneMain
     [SerializeField] private EnemyManager enemyManager = null;
     [SerializeField] private DamageManager damageManager = null;
     [SerializeField] private SquadronManager squadronManager = null;
-
-    public GameState CurrentGameState => currentGameState;
+    [SerializeField] private InGameNetworkTransfer inGameNetworkTransfer = null;
+    [SerializeField] private Transform playerStartTransform1 = null;
+    [SerializeField] private Transform playerStartTransform2 = null;
 
     public Player Player
     {
@@ -55,25 +49,32 @@ public class InGameSceneMain : BaseSceneMain
     public EnemyManager EnemyManager => enemyManager;
     public DamageManager DamageManager => damageManager;
     public SquadronManager SquadronManager => squadronManager;
+    public InGameNetworkTransfer InGameNetworkTransfer => inGameNetworkTransfer;
+    public Transform PlayerStartTransform1 => playerStartTransform1;
+    public Transform PlayerStartTransform2 => playerStartTransform2;
+    public GameState CurrentGameState => inGameNetworkTransfer.CurrentGameState;
+
+    public void GameStart()
+    {
+        inGameNetworkTransfer.GameStartClientRpc();
+    }
 
     protected override void OnStart()
     {
         base.OnStart();
-        sceneStartTime = Time.time;
+        Debug.Log("NetworkManager: " + NetworkManager.Singleton);
+        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
     }
 
-    protected override void UpdateScene()
+    private void OnClientConnectedCallback(ulong obj)
     {
-        base.UpdateScene();
+        Debug.Log("OnClientConnectedCallback : " + obj);
 
-        float currentTime = Time.time;
-        if (currentGameState == GameState.Ready)
+        playerCount++;
+
+        if (playerCount >= waitingPlayerCount)
         {
-            if (currentTime - sceneStartTime > gameReadyInterval)
-            {
-                // SquadronManager.StartGame();
-                currentGameState = GameState.Running;
-            }
+            GameStart();
         }
     }
 }

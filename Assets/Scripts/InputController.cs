@@ -6,7 +6,7 @@ public class InputController
     {
         // 게임 실행 중에만 사용자 입력을 받을 수 있도록 처리
         if (SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>() == null ||
-            SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().CurrentGameState != InGameSceneMain.GameState.Running)
+            SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().CurrentGameState != GameState.Running)
         {
             return;
         }

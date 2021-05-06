@@ -16,11 +16,11 @@ public class DamageManager : MonoBehaviour
         for (int i = 0; i < files.Length; i++)
         {
             GameObject go = Load(files[i].filePath);
-            SystemManager
-                .Instance
-                .GetCurrentSceneMain<InGameSceneMain>()
-                .DamageCacheSystem
-                .GenerateCache(files[i].filePath, go, files[i].cacheCount, canvasTransform);
+            InGameSceneMain inGameSceneMain;
+            if ((inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>()) != null)
+            {
+                inGameSceneMain.DamageCacheSystem.GenerateCache(files[i].filePath, go, files[i].cacheCount, canvasTransform);
+            }
         }
     }
 

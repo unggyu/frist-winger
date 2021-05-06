@@ -58,7 +58,15 @@ public class BulletManager : MonoBehaviour
         for (int i = 0; i < bulletFiles.Length; i++)
         {
             GameObject go = Load(bulletFiles[i].filePath);
-            SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().BulletCacheSystem.GenerateCache(bulletFiles[i].filePath, go, bulletFiles[i].cacheCount);
+            InGameSceneMain inGameSceneMain;
+            if ((inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>()) != null)
+            {
+                inGameSceneMain.BulletCacheSystem.GenerateCache(bulletFiles[i].filePath, go, bulletFiles[i].cacheCount, transform);
+            }
+            else
+            {
+                Debug.LogError("Bullet prepare Error! inGameSceneMain is null");
+            }
         }
     }
 
