@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using MLAPI.NetworkVariable;
+using UnityEngine;
 
 public class Enemy : Actor
 {
@@ -59,8 +60,13 @@ public class Enemy : Actor
     [SerializeField] private float bulletSpeed = 1.0f;
     [SerializeField] private int fireRemainCount = 1;
     [SerializeField] private int gamePoint = 0;
+    [SerializeField] private NetworkVariable<string> filePath = new NetworkVariable<string>();
 
-    public string FilePath { get; set; }
+    public string FilePath
+    {
+        get => filePath.Value;
+        set => filePath.Value = value;
+    }
 
     public void Appear(Vector3 targetPos)
     {
@@ -98,6 +104,19 @@ public class Enemy : Actor
 
         currentState = State.Ready;
         lastActionUpdateTime = Time.time;
+    }
+
+    protected override void Initialize()
+    {
+        base.Initialize();
+        Debug.Log("Enemy:Initialize");
+        if (NetworkManager.IsConnectedClient)
+        {
+            InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
+            transform.SetParent(inGameSceneMain.EnemyManager.transform);
+            inGameSceneMain.EnemyCacheSystem.Add(FilePath, gameObject);
+            gameObject.SetActive(true);
+        }
     }
 
     protected override void UpdateActor()

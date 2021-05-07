@@ -32,7 +32,7 @@ public class Player : Actor
 
     public void UpdateClientInput()
     {
-        if (IsClient)
+        if (IsLocalPlayer)
         {
             inputController.UpdateInput();
         }
@@ -149,37 +149,12 @@ public class Player : Actor
 #endif
     }
 
-    private void Move(Vector3 moveVector)
-    {
-        this.moveVector.Value = moveVector;
-        transform.position += moveVector;
-    }
-
-    private void SetPosition(Vector3 position)
-    {
-#if NETWORK_BEHAVIOUR
-        SetPositionServerRpc(position);
-#elif MONO_BEHAVIOUR
-        if (IsServer)
-        {
-            SetPositionClientRpc(position);
-        }
-        else
-        {
-            SetPositionServerRpc(position);
-            if (IsLocalPlayer)
-            {
-                transform.position = position;
-            }
-        }
-#endif
-    }
-
     [ServerRpc]
     private void MoveServerRpc(Vector3 moveVector)
     {
         this.moveVector.Value = moveVector;
-        transform.position += moveVector;
+        transform.position += AdjustMoveVector(moveVector);
+        // 타 플레이어가 보낸 경우 Update를 통해 초기화 되지 않으므로 사용 후 바로 초기화
         this.moveVector.Value = Vector3.zero;
     }
 
@@ -187,20 +162,9 @@ public class Player : Actor
     private void MoveClientRpc(Vector3 moveVector)
     {
         this.moveVector.Value = moveVector;
-        transform.position += moveVector;
+        transform.position += AdjustMoveVector(moveVector);
+        // 타 플레이어가 보낸 경우 Update를 통해 초기화 되지 않으므로 사용 후 바로 초기화
         this.moveVector.Value = Vector3.zero;
-    }
-
-    [ServerRpc]
-    private void SetPositionServerRpc(Vector3 position)
-    {
-        transform.position = position;
-    }
-
-    [ClientRpc]
-    private void SetPositionClientRpc(Vector3 position)
-    {
-        transform.position = position;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -221,27 +185,31 @@ public class Player : Actor
 
     private Vector3 AdjustMoveVector(Vector3 moveVector)
     {
-        Transform mainBGQuadTransform = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().MainBGQuadTransform;
-        Vector3 result = boxCollider.transform.position + boxCollider.center + moveVector;
-
-        if (result.x - boxCollider.size.x * 0.5f < -mainBGQuadTransform.localScale.x * 0.5f)
+        InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
+        if (inGameSceneMain != null)
         {
-            moveVector.x = 0;
-        }
+            Transform mainBGQuadTransform = inGameSceneMain.MainBGQuadTransform;
+            Vector3 result = boxCollider.transform.position + boxCollider.center + moveVector;
 
-        if (result.x + boxCollider.size.x * 0.5f > mainBGQuadTransform.localScale.x * 0.5f)
-        {
-            moveVector.x = 0;
-        }
+            if (result.x - boxCollider.size.x * 0.5f < -mainBGQuadTransform.localScale.x * 0.5f)
+            {
+                moveVector.x = 0;
+            }
 
-        if (result.y - boxCollider.size.y * 0.5f < -mainBGQuadTransform.localScale.y * 0.5f)
-        {
-            moveVector.y = 0;
-        }
+            if (result.x + boxCollider.size.x * 0.5f > mainBGQuadTransform.localScale.x * 0.5f)
+            {
+                moveVector.x = 0;
+            }
 
-        if (result.y + boxCollider.size.y * 0.5f > mainBGQuadTransform.localScale.y * 0.5f)
-        {
-            moveVector.y = 0;
+            if (result.y - boxCollider.size.y * 0.5f < -mainBGQuadTransform.localScale.y * 0.5f)
+            {
+                moveVector.y = 0;
+            }
+
+            if (result.y + boxCollider.size.y * 0.5f > mainBGQuadTransform.localScale.y * 0.5f)
+            {
+                moveVector.y = 0;
+            }
         }
 
         return moveVector;

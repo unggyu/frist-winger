@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using MLAPI;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyManager : MonoBehaviour
@@ -12,6 +13,11 @@ public class EnemyManager : MonoBehaviour
 
     public bool GenerateEnemy(SquadronMemberStruct data)
     {
+        if (NetworkManager.Singleton.IsConnectedClient)
+        {
+            return false;
+        }
+
         string filePath = SystemManager.Instance.EnemyTable.GetEnemy(data.EnemyId).FilePath;
         GameObject go = SystemManager
             .Instance
@@ -22,7 +28,6 @@ public class EnemyManager : MonoBehaviour
         go.transform.position = new Vector3(data.GeneratePointX, data.GeneratePointY, 0);
 
         Enemy enemy = go.GetComponent<Enemy>();
-        enemy.FilePath = filePath;
         enemy.Reset(data);
 
         enemies.Add(enemy);
@@ -31,6 +36,11 @@ public class EnemyManager : MonoBehaviour
 
     public bool RemoveEnemy(Enemy enemy)
     {
+        if (NetworkManager.Singleton.IsConnectedClient)
+        {
+            return false;
+        }
+
         if (!enemies.Contains(enemy))
         {
             Debug.LogError("No exists Enemy");
@@ -49,6 +59,11 @@ public class EnemyManager : MonoBehaviour
 
     public void Prepare()
     {
+        if (NetworkManager.Singleton.IsConnectedClient)
+        {
+            return;
+        }
+
         for (int i = 0; i < enemyFiles.Length; i++)
         {
             GameObject go = enemyFactory.Load(enemyFiles[i].filePath);
@@ -67,6 +82,6 @@ public class EnemyManager : MonoBehaviour
     // Start is called before the first frame update
     private void Start()
     {
-        Prepare();
+        // Prepare();
     }
 }

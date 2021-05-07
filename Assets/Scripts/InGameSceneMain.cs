@@ -57,6 +57,7 @@ public class InGameSceneMain : BaseSceneMain
     public void GameStart()
     {
         inGameNetworkTransfer.GameStartClientRpc();
+        enemyManager.Prepare();
     }
 
     protected override void OnStart()

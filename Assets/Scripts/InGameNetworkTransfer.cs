@@ -16,8 +16,8 @@ public class InGameNetworkTransfer : NetworkBehaviour
 {
     private const float gameReadyInterval = 3.0f;
 
-    private readonly NetworkVariable<GameState> currentGameState = new NetworkVariable<GameState>(GameState.None);
-    private readonly NetworkVariable<float> countingStartTime = new NetworkVariable<float>();
+    private readonly NetworkVariable<GameState> currentGameState = new NetworkVariable<GameState>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, GameState.None);
+    private readonly NetworkVariable<float> countingStartTime = new NetworkVariable<float>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
 
     public GameState CurrentGameState => currentGameState.Value;
 

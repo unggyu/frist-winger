@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using MLAPI;
+using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
@@ -10,7 +11,7 @@ public class PrefabCacheData
 
 public class PrefabCacheSystem
 {
-    readonly Dictionary<string, Queue<GameObject>> caches = new Dictionary<string, Queue<GameObject>>();
+    private readonly Dictionary<string, Queue<GameObject>> caches = new Dictionary<string, Queue<GameObject>>();
 
     public void GenerateCache(string filePath, GameObject gameObject, int cacheCount, Transform parentTransform = null)
     {
@@ -25,6 +26,13 @@ public class PrefabCacheSystem
             for (int i = 0; i < cacheCount; i++)
             {
                 GameObject go = Object.Instantiate(gameObject, parentTransform);
+                Enemy enemy = go.GetComponent<Enemy>();
+                NetworkObject networkObj = go.GetComponent<NetworkObject>();
+                if (enemy != null && networkObj != null)
+                {
+                    enemy.FilePath = filePath;
+                    networkObj.Spawn();
+                }
                 go.SetActive(false);
                 queue.Enqueue(go);
             }
@@ -50,6 +58,12 @@ public class PrefabCacheSystem
         GameObject go = caches[filePath].Dequeue();
         go.SetActive(true);
 
+        Enemy enemy = go.GetComponent<Enemy>();
+        if (enemy != null)
+        {
+            enemy.SetActiveClientRpc(true);
+        }
+
         return go;
     }
 
@@ -62,8 +76,29 @@ public class PrefabCacheSystem
         }
 
         gameObject.SetActive(false);
+        Enemy enemy = gameObject.GetComponent<Enemy>();
+        if (enemy != null)
+        {
+            enemy.SetActiveClientRpc(false);
+        }
 
         caches[filePath].Enqueue(gameObject);
         return true;
+    }
+
+    public void Add(string filePath, GameObject gameObject)
+    {
+        Queue<GameObject> queue;
+        if (caches.ContainsKey(filePath))
+        {
+            queue = caches[filePath];
+        }
+        else
+        {
+            queue = new Queue<GameObject>();
+            caches.Add(filePath, queue);
+        }
+
+        queue.Enqueue(gameObject);
     }
 }
