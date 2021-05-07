@@ -25,9 +25,8 @@ public class EnemyManager : MonoBehaviour
             .EnemyCacheSystem
             .Archive(filePath);
 
-        go.transform.position = new Vector3(data.GeneratePointX, data.GeneratePointY, 0);
-
         Enemy enemy = go.GetComponent<Enemy>();
+        enemy.SetPosition(new Vector3(data.GeneratePointX, data.GeneratePointY, 0));
         enemy.Reset(data);
 
         enemies.Add(enemy);

@@ -27,7 +27,7 @@ public class Player : Actor
             .BulletManager
             .Generate(BulletManager.PlayerBulletIndex);
 
-        bullet.Fire(this, fireTransform.position, fireTransform.right, bulletSpeed, damage);
+        bullet.Fire(this, fireTransform.position, fireTransform.right, bulletSpeed, damage.Value);
     }
 
     public void UpdateClientInput()
@@ -62,7 +62,7 @@ public class Player : Actor
     {
         base.DecreaseHp(attacker, value, damagePos);
         PlayerStatePanel playerStatePanel = PanelManager.GetPanel(typeof(PlayerStatePanel)) as PlayerStatePanel;
-        playerStatePanel.SetHp(currentHp, maxHp);
+        playerStatePanel.SetHp(currentHp.Value, maxHp.Value);
 
         Vector3 damagePoint = damagePos + Random.insideUnitSphere * 0.5f;
         SystemManager
@@ -93,7 +93,7 @@ public class Player : Actor
     private void InitializePrivate()
     {
         PlayerStatePanel playerStatePanel = PanelManager.GetPanel(typeof(PlayerStatePanel)) as PlayerStatePanel;
-        playerStatePanel.SetHp(currentHp, maxHp);
+        playerStatePanel.SetHp(currentHp.Value, maxHp.Value);
 
         InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
 
@@ -178,7 +178,7 @@ public class Player : Actor
                 Vector3 crashPos = enemy.transform.position + box.center;
                 crashPos.x += box.size.x * 0.5f;
 
-                enemy.OnCrash(enemy, damage, crashPos);
+                enemy.OnCrash(enemy, damage.Value, crashPos);
             }
         }
     }

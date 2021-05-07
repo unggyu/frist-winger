@@ -2,18 +2,23 @@
 #define MONO_BEHAVIOUR // MohoBehaviour 인스턴스의 Update로 호출되어 실행되고 있을 때
 using MLAPI;
 using MLAPI.Messaging;
+using MLAPI.NetworkVariable;
 using UnityEngine;
 
 public class Actor : NetworkBehaviour
 {
-    [SerializeField] protected int maxHp = 100;
-    [SerializeField] protected int currentHp;
-    [SerializeField] protected int damage = 1;
-    [SerializeField] protected int crashDamage = 100;
+    [SerializeField] protected NetworkVariable<int> maxHp = 
+        new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 100);
+    [SerializeField] protected NetworkVariable<int> currentHp =
+        new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
+    [SerializeField] protected NetworkVariable<int> damage =
+        new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 1);
+    [SerializeField] protected NetworkVariable<int> crashDamage =
+        new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 100);
     [SerializeField] private bool isDead = false;
 
     public bool IsDead => isDead;
-    protected int CrashDamage => crashDamage;
+    protected int CrashDamage => crashDamage.Value;
 
     public virtual void OnBulletHited(Actor attacker, int damage, Vector3 hitPos)
     {
@@ -70,14 +75,14 @@ public class Actor : NetworkBehaviour
             return;
         }
 
-        currentHp -= value;
+        currentHp.Value -= value;
 
-        if (currentHp < 0)
+        if (currentHp.Value < 0)
         {
-            currentHp = 0;
+            currentHp.Value = 0;
         }
 
-        if (currentHp == 0)
+        if (currentHp.Value == 0)
         {
             OnDead(attacker);
         }

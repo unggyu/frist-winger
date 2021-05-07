@@ -31,9 +31,13 @@ public class PrefabCacheSystem
                 if (enemy != null && networkObj != null)
                 {
                     enemy.FilePath = filePath;
-                    networkObj.Spawn();
+                    networkObj.Spawn(); // active가 false 되기 전에 해야함
+                    enemy.SetActiveClientRpc(false); // 클라이언트의 Enemy도 active가 false 되어야 함
                 }
-                go.SetActive(false);
+                else
+                {
+                    go.SetActive(false); // enemy가 아닌 다른 cache들
+                }
                 queue.Enqueue(go);
             }
 
