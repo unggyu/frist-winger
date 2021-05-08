@@ -10,9 +10,21 @@ public class Player : Actor
 
     [SerializeField] private float speed = 1.0f;
     [SerializeField] private float bulletSpeed = 1.0f;
-    [SerializeField] private NetworkVariable<Vector3> moveVector = new NetworkVariable<Vector3>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, Vector3.zero);
     [SerializeField] private Transform fireTransform = null;
     [SerializeField] private BoxCollider boxCollider = null;
+
+    /// <summary>
+    /// Host 플레이어인지 여부
+    /// </summary>
+    private readonly NetworkVariable<bool> isHost =
+        new NetworkVariable<bool>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
+
+    /// <summary>
+    /// 이동 벡터
+    /// </summary>
+    [SerializeField]
+        private NetworkVariable<Vector3> moveVector =
+        new NetworkVariable<Vector3>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, Vector3.zero);
 
     public void ProcessInput(Vector3 moveDirection)
     {
@@ -42,13 +54,20 @@ public class Player : Actor
     {
         base.Initialize();
 
+        if (IsServer && IsLocalPlayer)
+        {
+            isHost.Value = true;
+        }
+
         InGameSceneMain sceneMain;
         if ((sceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>()) != null)
         {
-            InitializePrivate();
+            InitializeInternal();
         }
         else
         {
+            // 현재 LoadingScene이면 InGameScene을 사용하지 못하므로
+            // Scene이 변경되면 초기화 하도록
             SystemManager.Instance.CurrentSceneMainChanged += CurrentSceneMainChanged;
         }
     }
@@ -80,17 +99,15 @@ public class Player : Actor
 
     private void CurrentSceneMainChanged(object sender, string sceneName)
     {
-        Debug.Log("CurrentSceneMainChanged sceneName = " + sceneName);
-
         if (sceneName.Equals(nameof(InGameSceneMain)))
         {
-            InitializePrivate();
+            InitializeInternal();
         }
 
         SystemManager.Instance.CurrentSceneMainChanged -= CurrentSceneMainChanged;
     }
 
-    private void InitializePrivate()
+    private void InitializeInternal()
     {
         PlayerStatePanel playerStatePanel = PanelManager.GetPanel(typeof(PlayerStatePanel)) as PlayerStatePanel;
         playerStatePanel.SetHp(currentHp.Value, maxHp.Value);
@@ -103,7 +120,7 @@ public class Player : Actor
         }
 
         Transform startTransform;
-        if (IsServer)
+        if (isHost.Value)
         {
             startTransform = inGameSceneMain.PlayerStartTransform1;
         }
@@ -131,7 +148,7 @@ public class Player : Actor
 #if NETWORK_BEHAVIOUR
         MoveServerRpc(moveVector.Value);
 #elif MONO_BEHAVIOUR
-        if (IsServer)
+        if (isHost.Value)
         {
             // Host 플레이어인 경우 클라이언트에게 RPC로 보냄
             MoveClientRpc(moveVector.Value);

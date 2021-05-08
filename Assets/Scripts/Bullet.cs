@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using MLAPI;
+using MLAPI.NetworkVariable;
+using UnityEngine;
 
 public enum OwnerSide : int
 {
@@ -6,31 +8,122 @@ public enum OwnerSide : int
     Enemy
 }
 
-public class Bullet : MonoBehaviour
+public class Bullet : NetworkBehaviour
 {
+    /// <summary>
+    /// 총알 생존시간
+    /// </summary>
     private const float lifeTime = 15.0f;
 
-    private float firedTime = 0.0f;
-    private bool needMove = false;
-    private bool hited = false;
-    private int damage = 1;
-    private Actor owner;
+    /// <summary>
+    /// 이동이 필요한지 여부
+    /// </summary>
+    private readonly NetworkVariable<bool> needMove =
+        new NetworkVariable<bool>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, false);
 
-    [SerializeField] private Vector3 moveDirection = Vector3.zero;
-    [SerializeField] private float speed = 0.0f;
+    /// <summary>
+    /// 발사된 시각
+    /// </summary>
+    private readonly NetworkVariable<float> firedTime =
+        new NetworkVariable<float>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 0.0f);
 
-    public string FilePath { get; set; }
+    /// <summary>
+    /// 부딪혔는지 플래그
+    /// </summary>
+    private readonly NetworkVariable<bool> hited =
+        new NetworkVariable<bool>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, false);
+
+    /// <summary>
+    /// 데미지
+    /// </summary>
+    private readonly NetworkVariable<int> damage =
+        new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 1);
+
+    /// <summary>
+    /// 이동 방향
+    /// </summary>
+    [SerializeField]
+    private readonly NetworkVariable<Vector3> moveDirection = 
+        new NetworkVariable<Vector3>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, Vector3.zero);
+
+    /// <summary>
+    /// 속도
+    /// </summary>
+    [SerializeField]
+    private readonly NetworkVariable<float> speed =
+        new NetworkVariable<float>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 0.0f);
+
+    /// <summary>
+    /// 위치
+    /// </summary>
+    [SerializeField]
+    private readonly NetworkVariable<Vector3> position =
+        new NetworkVariable<Vector3>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
+
+    /// <summary>
+    /// 활성화 여부
+    /// </summary>
+    [SerializeField]
+    private readonly NetworkVariable<bool> isActive =
+        new NetworkVariable<bool>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
+
+    /// <summary>
+    /// Prefab 파일 경로
+    /// </summary>
+    private readonly NetworkVariable<string> filePath =
+        new NetworkVariable<string>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
+
+    /// <summary>
+    /// 해당 총알을 발사한 객체. NetworkBehaviour 상속 클래스라 NetworkVariable 안 됨
+    /// </summary>
+    [SerializeField] private Actor owner;
+
+    /// <summary>
+    /// Prefab 파일 경로
+    /// </summary>
+    public string FilePath
+    {
+        get => filePath.Value;
+        set => filePath.Value = value;
+    }
 
     public void Fire(Actor owner, Vector3 firePosition, Vector3 direction, float speed, int damage)
     {
         this.owner = owner;
-        transform.position = firePosition;
-        moveDirection = direction;
-        this.speed = speed;
-        this.damage = damage;
+        SetPosition(firePosition);
+        moveDirection.Value = direction;
+        this.speed.Value = speed;
+        this.damage.Value = damage;
 
-        needMove = true;
-        firedTime = Time.time;
+        needMove.Value = true;
+        firedTime.Value = Time.time;
+    }
+
+    public void SetActive(bool active)
+    {
+        isActive.Value = active;
+    }
+
+    private void Start()
+    {
+        if (NetworkManager.IsConnectedClient)
+        {
+            InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
+            transform.SetParent(inGameSceneMain.BulletManager.transform);
+            inGameSceneMain.BulletCacheSystem.Add(FilePath, gameObject);
+            gameObject.SetActive(false);
+        }
+    }
+
+    private void OnEnable()
+    {
+        position.OnValueChanged += OnPositionChanged;
+        isActive.OnValueChanged += OnIsActiveChanged;
+    }
+
+    private void OnDisable()
+    {
+        position.OnValueChanged -= OnPositionChanged;
     }
 
     // Update is called once per frame
@@ -46,12 +139,12 @@ public class Bullet : MonoBehaviour
 
     private void UpdateMove()
     {
-        if (!needMove)
+        if (!needMove.Value)
         {
             return;
         }
 
-        Vector3 moveVector = moveDirection.normalized * speed * Time.deltaTime;
+        Vector3 moveVector = moveDirection.Value.normalized * speed.Value * Time.deltaTime;
         moveVector = AdjustMove(moveVector);
         transform.position += moveVector;
     }
@@ -69,7 +162,7 @@ public class Bullet : MonoBehaviour
 
     private void OnBulletCollision(Collider collider)
     {
-        if (hited)
+        if (hited.Value)
         {
             return;
         }
@@ -86,13 +179,13 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-        actor.OnBulletHited(actor, damage, transform.position);
+        actor.OnBulletHited(actor, damage.Value, transform.position);
 
         Collider myCollider = GetComponentInChildren<Collider>();
         myCollider.enabled = false;
 
-        hited = true;
-        needMove = false;
+        hited.Value = true;
+        needMove.Value = false;
 
         GameObject go = SystemManager
             .Instance
@@ -119,7 +212,7 @@ public class Bullet : MonoBehaviour
             Disappear();
             return true;
         }
-        else if (Time.time - firedTime > lifeTime)
+        else if (Time.time - firedTime.Value > lifeTime)
         {
             Disappear();
             return true;
@@ -131,5 +224,20 @@ public class Bullet : MonoBehaviour
     private void Disappear()
     {
         SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().BulletManager.Remove(this);
+    }
+
+    private void SetPosition(Vector3 position)
+    {
+        this.position.Value = position;
+    }
+
+    private void OnPositionChanged(Vector3 previousPosition, Vector3 newPosition)
+    {
+        transform.position = newPosition;
+    }
+
+    private void OnIsActiveChanged(bool previousValue, bool newValue)
+    {
+        gameObject.SetActive(newValue);
     }
 }

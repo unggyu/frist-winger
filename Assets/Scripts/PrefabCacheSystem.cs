@@ -26,18 +26,31 @@ public class PrefabCacheSystem
             for (int i = 0; i < cacheCount; i++)
             {
                 GameObject go = Object.Instantiate(gameObject, parentTransform);
-                Enemy enemy = go.GetComponent<Enemy>();
                 NetworkObject networkObj = go.GetComponent<NetworkObject>();
-                if (enemy != null && networkObj != null)
+
+                if (networkObj != null)
                 {
-                    enemy.FilePath = filePath;
-                    networkObj.Spawn(); // active가 false 되기 전에 해야함
-                    enemy.SetActiveClientRpc(false); // 클라이언트의 Enemy도 active가 false 되어야 함
+                    Enemy enemy = go.GetComponent<Enemy>();
+                    if (enemy != null)
+                    {
+                        enemy.FilePath = filePath;
+                        networkObj.Spawn(); // active가 false 되기 전에 해야함
+                        enemy.SetActiveClientRpc(false); // 클라이언트의 Enemy도 active가 false 되어야 함
+                    }
+
+                    Bullet bullet = go.GetComponent<Bullet>();
+                    if (bullet != null)
+                    {
+                        bullet.FilePath = filePath;
+                        networkObj.Spawn();
+                        bullet.SetActive(false);
+                    }
                 }
                 else
                 {
-                    go.SetActive(false); // enemy가 아닌 다른 cache들
+                    go.SetActive(false);
                 }
+
                 queue.Enqueue(go);
             }
 
@@ -66,6 +79,12 @@ public class PrefabCacheSystem
         if (enemy != null)
         {
             enemy.SetActiveClientRpc(true);
+        }
+
+        Bullet bullet = go.GetComponent<Bullet>();
+        if (bullet != null)
+        {
+            bullet.SetActive(true);
         }
 
         return go;

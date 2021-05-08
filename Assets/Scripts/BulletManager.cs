@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using MLAPI;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BulletManager : MonoBehaviour
@@ -12,6 +13,11 @@ public class BulletManager : MonoBehaviour
 
     public Bullet Generate(int index)
     {
+        if (NetworkManager.Singleton.IsClient)
+        {
+            return null;
+        }
+
         if (index < 0 || index >= bulletFiles.Length)
         {
             Debug.LogError("Generate error! out of range! index = " + index);
@@ -22,7 +28,6 @@ public class BulletManager : MonoBehaviour
         GameObject go = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().BulletCacheSystem.Archive(filePath);
 
         Bullet bullet = go.GetComponent<Bullet>();
-        bullet.FilePath = filePath;
 
         return bullet;
     }
@@ -55,6 +60,11 @@ public class BulletManager : MonoBehaviour
 
     public void Prepare()
     {
+        if (NetworkManager.Singleton.IsClient)
+        {
+            return;
+        }
+
         for (int i = 0; i < bulletFiles.Length; i++)
         {
             GameObject go = Load(bulletFiles[i].filePath);
@@ -72,11 +82,17 @@ public class BulletManager : MonoBehaviour
 
     public bool Remove(Bullet bullet)
     {
+        if (NetworkManager.Singleton.IsClient)
+        {
+            return false;
+        }
+
         return SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().BulletCacheSystem.Restore(bullet.FilePath, bullet.gameObject);
     }
 
     private void Start()
     {
-        Prepare();
+        // Host에서만 Prepare를 해야함
+        // Prepare();
     }
 }

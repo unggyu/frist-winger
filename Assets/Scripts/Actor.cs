@@ -7,17 +7,43 @@ using UnityEngine;
 
 public class Actor : NetworkBehaviour
 {
+    /// <summary>
+    /// 최대 체력
+    /// </summary>
     [SerializeField] protected NetworkVariable<int> maxHp = 
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 100);
+
+    /// <summary>
+    /// 현재 체력
+    /// </summary>
     [SerializeField] protected NetworkVariable<int> currentHp =
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
+
+    /// <summary>
+    /// 데미지
+    /// </summary>
     [SerializeField] protected NetworkVariable<int> damage =
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 1);
+
+    /// <summary>
+    /// 충돌 데미지
+    /// </summary>
     [SerializeField] protected NetworkVariable<int> crashDamage =
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 100);
+
+    /// <summary>
+    /// 죽었는지 여부
+    /// </summary>
     [SerializeField] private bool isDead = false;
 
+    /// <summary>
+    /// 죽었는지 여부
+    /// </summary>
     public bool IsDead => isDead;
+
+    /// <summary>
+    /// 충돌 데미지
+    /// </summary>
     protected int CrashDamage => crashDamage.Value;
 
     public virtual void OnBulletHited(Actor attacker, int damage, Vector3 hitPos)
@@ -100,18 +126,6 @@ public class Actor : NetworkBehaviour
             .GenerateEffect(EffectManager.ActorDeadFxIndex, transform.position);
     }
 
-    [ServerRpc]
-    private void SetPositionServerRpc(Vector3 position)
-    {
-        transform.position = position;
-    }
-
-    [ClientRpc]
-    private void SetPositionClientRpc(Vector3 position)
-    {
-        transform.position = position;
-    }
-
     private void Start()
     {
         Initialize();
@@ -120,5 +134,19 @@ public class Actor : NetworkBehaviour
     private void Update()
     {
         UpdateActor();
+    }
+
+    [ServerRpc]
+    private void SetPositionServerRpc(Vector3 position)
+    {
+        Debug.Log("SetPositionServerRpc actor = " + gameObject.name + ", id = " + NetworkObjectId + ", position = " + position);
+        transform.position = position;
+    }
+
+    [ClientRpc]
+    private void SetPositionClientRpc(Vector3 position)
+    {
+        Debug.Log("SetPositionClientRpc actor = " + gameObject.name + ", id = " + NetworkObjectId + ", position = " + position);
+        transform.position = position;
     }
 }

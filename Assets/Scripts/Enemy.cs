@@ -169,6 +169,7 @@ public class Enemy : Actor
         if (NetworkManager.IsConnectedClient)
         {
             InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
+            // 서버에서 생성한 객체이므로 따로 Parent 설정을 해줘야 함
             transform.SetParent(inGameSceneMain.EnemyManager.transform);
             inGameSceneMain.EnemyCacheSystem.Add(FilePath, gameObject);
             gameObject.SetActive(true);
