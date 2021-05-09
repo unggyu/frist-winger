@@ -35,7 +35,7 @@ public class ActorManager
 
     public Actor GetActor(int actorInstanceId)
     {
-        if (actors.ContainsKey(actorInstanceId))
+        if (!actors.ContainsKey(actorInstanceId))
         {
             Debug.LogError("GetActor Error! no exist! actorInstanceId = " + actorInstanceId);
             return null;

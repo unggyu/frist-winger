@@ -31,4 +31,13 @@ public class SquadronScheduleTable : TableLoader<SquadronScheduleDataStruct>
 
         return tableDatas[index];
     }
+
+    /// <summary>
+    /// 데이터 개수 제공
+    /// </summary>
+    /// <returns></returns>
+    public int GetDataCount()
+    {
+        return tableDatas.Count;
+    }
 }

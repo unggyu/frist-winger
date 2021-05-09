@@ -67,11 +67,6 @@ public class Bullet : NetworkBehaviour
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
 
     /// <summary>
-    /// 해당 총알을 발사한 객체. NetworkBehaviour 상속 클래스라 NetworkVariable 안 됨
-    /// </summary>
-    [SerializeField] private Actor owner;
-
-    /// <summary>
     /// Prefab 파일 경로
     /// </summary>
     public string FilePath
@@ -80,10 +75,9 @@ public class Bullet : NetworkBehaviour
         set => filePath.Value = value;
     }
 
-    public void Fire(Actor owner, Vector3 firePosition, Vector3 direction, float speed, int damage)
+    public void Fire(int ownerInstanceId, Vector3 firePosition, Vector3 direction, float speed, int damage)
     {
-        // this.owner = owner;
-        ownerInstanceId.Value = owner.ActorInstanceId;
+        this.ownerInstanceId.Value = ownerInstanceId;
         SetPosition(firePosition);
         moveDirection.Value = direction;
         this.speed.Value = speed;

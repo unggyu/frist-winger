@@ -33,13 +33,20 @@ public class Player : Actor
 
     public void Fire()
     {
-        Bullet bullet = SystemManager
+        if (isHost.Value)
+        {
+            Bullet bullet = SystemManager
             .Instance
             .GetCurrentSceneMain<InGameSceneMain>()
             .BulletManager
             .Generate(BulletManager.PlayerBulletIndex);
 
-        bullet.Fire(this, fireTransform.position, fireTransform.right, bulletSpeed, damage.Value);
+            bullet.Fire(actorInstanceId.Value, fireTransform.position, fireTransform.right, bulletSpeed, damage.Value);
+        }
+        else
+        {
+            FireServerRpc(actorInstanceId.Value, fireTransform.position, fireTransform.right, bulletSpeed, damage.Value);
+        }
     }
 
     public void UpdateClientInput()
@@ -166,6 +173,13 @@ public class Player : Actor
         this.moveVector = moveVector;
         transform.position += AdjustMoveVector(moveVector);
         this.moveVector = Vector3.zero;
+    }
+
+    [ServerRpc]
+    private void FireServerRpc(int ownerInstanceId, Vector3 firePosition, Vector3 direction, float speed, int damage)
+    {
+        Bullet bullet = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().BulletManager.Generate(BulletManager.PlayerBulletIndex);
+        bullet.Fire(ownerInstanceId, firePosition, direction, speed, damage);
     }
 
     private Vector3 AdjustMoveVector(Vector3 moveVector)

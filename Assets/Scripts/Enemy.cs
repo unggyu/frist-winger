@@ -141,7 +141,7 @@ public class Enemy : Actor
             .BulletManager
             .Generate(BulletManager.EnemyBulletIndex);
 
-        bullet.Fire(this, fireTransform.position, -fireTransform.right, bulletSpeed.Value, damage.Value);
+        bullet.Fire(actorInstanceId.Value, fireTransform.position, -fireTransform.right, bulletSpeed.Value, damage.Value);
     }
 
     public void Reset(SquadronMemberStruct data)

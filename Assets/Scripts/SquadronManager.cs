@@ -3,7 +3,7 @@
 public class SquadronManager : MonoBehaviour
 {
     private float gameStartedTime;
-    private int squadronIndex;
+    private int scheduleIndex;
     private bool running = false;
 
     [SerializeField]
@@ -15,7 +15,7 @@ public class SquadronManager : MonoBehaviour
     public void StartGame()
     {
         gameStartedTime = Time.time;
-        squadronIndex = 0;
+        scheduleIndex = 0;
         running = true;
         Debug.Log("Game Started!");
     }
@@ -44,12 +44,13 @@ public class SquadronManager : MonoBehaviour
             return;
         }
 
-        if (Time.time - gameStartedTime >= squadronScheduleTable.GetScheduleData(squadronIndex).GenerateTime)
+        SquadronScheduleDataStruct data = squadronScheduleTable.GetScheduleData(scheduleIndex);
+        if (Time.time - gameStartedTime >= data.GenerateTime)
         {
-            GenerateSquadron(squadronDatas[squadronIndex]);
-            squadronIndex++;
+            GenerateSquadron(squadronDatas[data.SquadronId]);
+            scheduleIndex++;
 
-            if (squadronIndex >= squadronDatas.Length)
+            if (scheduleIndex >= squadronScheduleTable.GetDataCount())
             {
                 AllSquadronGenerated();
                 return;
@@ -59,7 +60,7 @@ public class SquadronManager : MonoBehaviour
 
     private void GenerateSquadron(SquadronTable table)
     {
-        Debug.Log("GenerateSquadron");
+        Debug.Log("GenerateSquadron : " + scheduleIndex);
 
         for (int i = 0; i < table.GetCount(); i++)
         {

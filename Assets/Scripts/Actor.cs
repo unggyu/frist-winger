@@ -14,26 +14,40 @@ public class Actor : NetworkBehaviour
     /// <summary>
     /// 최대 체력
     /// </summary>
-    [SerializeField] protected readonly NetworkVariable<int> maxHp = 
+    [SerializeField]
+    protected readonly NetworkVariable<int> maxHp = 
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 100);
 
     /// <summary>
     /// 현재 체력
     /// </summary>
-    [SerializeField] protected readonly NetworkVariable<int> currentHp =
+    [SerializeField]
+    protected readonly NetworkVariable<int> currentHp =
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
 
     /// <summary>
     /// 데미지
     /// </summary>
-    [SerializeField] protected readonly NetworkVariable<int> damage =
+    [SerializeField]
+    protected readonly NetworkVariable<int> damage =
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 1);
 
     /// <summary>
     /// 충돌 데미지
     /// </summary>
-    [SerializeField] protected readonly NetworkVariable<int> crashDamage =
+    [SerializeField]
+    protected readonly NetworkVariable<int> crashDamage =
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 100);
+
+    /// <summary>
+    /// 초기화 여부
+    /// </summary>
+    private bool initialized = false;
+
+    /// <summary>
+    /// Actor 등록이 필요한지 여부
+    /// </summary>
+    private bool isNeedRegistActor = false;
 
     /// <summary>
     /// 죽었는지 여부
@@ -97,6 +111,8 @@ public class Actor : NetworkBehaviour
         {
             actorInstanceId.Value = GetInstanceID();
         }
+
+        initialized = true;
     }
 
     protected virtual void UpdateActor()
@@ -169,6 +185,14 @@ public class Actor : NetworkBehaviour
         transform.position = position;
     }
 
+    private void RegistActor()
+    {
+        if (actorInstanceId.Value != 0)
+        {
+            SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().ActorManager.Regist(actorInstanceId.Value, this);
+        }
+    }
+
     private void OnActorInstanceIdChanged(int previousId, int newId)
     {
         if (IsServer)
@@ -176,9 +200,14 @@ public class Actor : NetworkBehaviour
             return;
         }
 
-        if (actorInstanceId.Value != 0)
+        if (SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>() != null)
         {
-            SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().ActorManager.Regist(actorInstanceId.Value, this);
+            RegistActor();
+        }
+        else
+        {
+            isNeedRegistActor = true;
+            SystemManager.Instance.CurrentSceneMainChanged += CurrentSceneMainChanged;
         }
     }
 
@@ -186,7 +215,16 @@ public class Actor : NetworkBehaviour
     {
         if (sceneName.Equals(nameof(InGameSceneMain)))
         {
-            Initialize();
+            if (!initialized)
+            {
+                Initialize();
+            }
+
+            if (isNeedRegistActor)
+            {
+                RegistActor();
+                isNeedRegistActor = false;
+            }
         }
 
         SystemManager.Instance.CurrentSceneMainChanged -= CurrentSceneMainChanged;
