@@ -1,4 +1,5 @@
 ﻿using MLAPI;
+using MLAPI.Messaging;
 using MLAPI.NetworkVariable;
 using UnityEngine;
 
@@ -54,24 +55,16 @@ public class Bullet : NetworkBehaviour
         new NetworkVariable<float>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 0.0f);
 
     /// <summary>
-    /// 위치
-    /// </summary>
-    [SerializeField]
-    private readonly NetworkVariable<Vector3> position =
-        new NetworkVariable<Vector3>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
-
-    /// <summary>
-    /// 활성화 여부
-    /// </summary>
-    [SerializeField]
-    private readonly NetworkVariable<bool> isActive =
-        new NetworkVariable<bool>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
-
-    /// <summary>
     /// Prefab 파일 경로
     /// </summary>
     private readonly NetworkVariable<string> filePath =
         new NetworkVariable<string>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
+
+    /// <summary>
+    /// 발사자 객체 Id
+    /// </summary>
+    private readonly NetworkVariable<int> ownerInstanceId =
+        new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
 
     /// <summary>
     /// 해당 총알을 발사한 객체. NetworkBehaviour 상속 클래스라 NetworkVariable 안 됨
@@ -89,7 +82,8 @@ public class Bullet : NetworkBehaviour
 
     public void Fire(Actor owner, Vector3 firePosition, Vector3 direction, float speed, int damage)
     {
-        this.owner = owner;
+        // this.owner = owner;
+        ownerInstanceId.Value = owner.ActorInstanceId;
         SetPosition(firePosition);
         moveDirection.Value = direction;
         this.speed.Value = speed;
@@ -99,31 +93,21 @@ public class Bullet : NetworkBehaviour
         firedTime.Value = Time.time;
     }
 
-    public void SetActive(bool active)
+    [ClientRpc]
+    public void SetActiveClientRpc(bool value)
     {
-        isActive.Value = active;
+        gameObject.SetActive(value);
     }
 
     private void Start()
     {
-        if (NetworkManager.IsConnectedClient)
+        if (!IsServer)
         {
             InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
             transform.SetParent(inGameSceneMain.BulletManager.transform);
             inGameSceneMain.BulletCacheSystem.Add(FilePath, gameObject);
             gameObject.SetActive(false);
         }
-    }
-
-    private void OnEnable()
-    {
-        position.OnValueChanged += OnPositionChanged;
-        isActive.OnValueChanged += OnIsActiveChanged;
-    }
-
-    private void OnDisable()
-    {
-        position.OnValueChanged -= OnPositionChanged;
     }
 
     // Update is called once per frame
@@ -135,6 +119,49 @@ public class Bullet : NetworkBehaviour
         }
 
         UpdateMove();
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        OnBulletCollision(other);
+    }
+
+    private void OnBulletCollision(Collider collider)
+    {
+        if (hited.Value)
+        {
+            return;
+        }
+
+        if (collider.gameObject.layer == LayerMask.NameToLayer("EnemyBullet") ||
+            collider.gameObject.layer == LayerMask.NameToLayer("PlayerBullet"))
+        {
+            return;
+        }
+
+        Actor owner = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().ActorManager.GetActor(ownerInstanceId.Value);
+        Actor actor = collider.GetComponentInParent<Actor>();
+        if (actor && actor.IsDead || actor.gameObject.layer == owner.gameObject.layer)
+        {
+            return;
+        }
+
+        actor.OnBulletHited(owner, damage.Value, transform.position);
+
+        Collider myCollider = GetComponentInChildren<Collider>();
+        myCollider.enabled = false;
+
+        hited.Value = true;
+        needMove.Value = false;
+
+        GameObject go = SystemManager
+            .Instance
+            .GetCurrentSceneMain<InGameSceneMain>()
+            .EffectManager
+            .GenerateEffect(EffectManager.BulletDisappearFxIndex, transform.position);
+
+        go.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+        Disappear();
     }
 
     private void UpdateMove()
@@ -160,48 +187,6 @@ public class Bullet : NetworkBehaviour
         return moveVector;
     }
 
-    private void OnBulletCollision(Collider collider)
-    {
-        if (hited.Value)
-        {
-            return;
-        }
-
-        if (collider.gameObject.layer == LayerMask.NameToLayer("EnemyBullet") ||
-            collider.gameObject.layer == LayerMask.NameToLayer("PlayerBullet"))
-        {
-            return;
-        }
-
-        Actor actor = collider.GetComponentInParent<Actor>();
-        if (actor && actor.IsDead || actor.gameObject.layer == owner.gameObject.layer)
-        {
-            return;
-        }
-
-        actor.OnBulletHited(actor, damage.Value, transform.position);
-
-        Collider myCollider = GetComponentInChildren<Collider>();
-        myCollider.enabled = false;
-
-        hited.Value = true;
-        needMove.Value = false;
-
-        GameObject go = SystemManager
-            .Instance
-            .GetCurrentSceneMain<InGameSceneMain>()
-            .EffectManager
-            .GenerateEffect(EffectManager.BulletDisappearFxIndex, transform.position);
-
-        go.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-        Disappear();
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        OnBulletCollision(other);
-    }
-
     private bool ProcessDisappearCondition()
     {
         if (transform.position.x > 15.0f ||
@@ -221,19 +206,37 @@ public class Bullet : NetworkBehaviour
         return false;
     }
 
+    private void SetPosition(Vector3 position)
+    {
+        if (IsServer)
+        {
+            SetPositionClientRpc(position);
+        }
+        else
+        {
+            SetPositionServerRpc(position);
+            if (IsLocalPlayer)
+            {
+                transform.position = position;
+            }
+        }
+    }
+
+    [ServerRpc]
+    private void SetPositionServerRpc(Vector3 position)
+    {
+        transform.position = position;
+    }
+
+    [ClientRpc]
+    private void SetPositionClientRpc(Vector3 position)
+    {
+        transform.position = position;
+    }
+
     private void Disappear()
     {
         SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().BulletManager.Remove(this);
-    }
-
-    private void SetPosition(Vector3 position)
-    {
-        this.position.Value = position;
-    }
-
-    private void OnPositionChanged(Vector3 previousPosition, Vector3 newPosition)
-    {
-        transform.position = newPosition;
     }
 
     private void OnIsActiveChanged(bool previousValue, bool newValue)

@@ -1,6 +1,4 @@
-﻿// #define NETWORK_BEHAVIOUR // 정상적으로 NetworkBehaviour 인스턴스의 Update로 호출되어 실행되고 있을 때
-#define MONO_BEHAVIOUR // MohoBehaviour 인스턴스의 Update로 호출되어 실행되고 있을 때
-using MLAPI.Messaging;
+﻿using MLAPI.Messaging;
 using MLAPI.NetworkVariable;
 using UnityEngine;
 
@@ -17,18 +15,20 @@ public class Player : Actor
     /// Host 플레이어인지 여부
     /// </summary>
     private readonly NetworkVariable<bool> isHost =
-        new NetworkVariable<bool>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
+        new NetworkVariable<bool>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.ServerOnly });
 
     /// <summary>
     /// 이동 벡터
     /// </summary>
     [SerializeField]
-        private NetworkVariable<Vector3> moveVector =
-        new NetworkVariable<Vector3>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, Vector3.zero);
+    private Vector3 moveVector = Vector3.zero;
 
     public void ProcessInput(Vector3 moveDirection)
     {
-        moveVector.Value = moveDirection * speed * Time.deltaTime;
+        if (moveDirection != Vector3.zero)
+        {
+            moveVector = moveDirection * speed * Time.deltaTime;
+        }
     }
 
     public void Fire()
@@ -59,21 +59,38 @@ public class Player : Actor
             isHost.Value = true;
         }
 
-        InGameSceneMain sceneMain;
-        if ((sceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>()) != null)
+        PlayerStatePanel playerStatePanel = PanelManager.GetPanel(typeof(PlayerStatePanel)) as PlayerStatePanel;
+        playerStatePanel.SetHp(currentHp.Value, maxHp.Value);
+
+        InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
+
+        if (IsLocalPlayer)
         {
-            InitializeInternal();
+            inGameSceneMain.Player = this;
+        }
+
+        Transform startTransform;
+        if (isHost.Value)
+        {
+            startTransform = inGameSceneMain.PlayerStartTransform1;
         }
         else
         {
-            // 현재 LoadingScene이면 InGameScene을 사용하지 못하므로
-            // Scene이 변경되면 초기화 하도록
-            SystemManager.Instance.CurrentSceneMainChanged += CurrentSceneMainChanged;
+            startTransform = inGameSceneMain.PlayerStartTransform2;
+        }
+
+        SetPosition(startTransform.position);
+
+        if (actorInstanceId.Value != 0)
+        {
+            // Player 등록
+            inGameSceneMain.ActorManager.Regist(actorInstanceId.Value, this);
         }
     }
 
     protected override void UpdateActor()
     {
+        UpdateClientInput();
         UpdateMove();
     }
 
@@ -97,93 +114,6 @@ public class Player : Actor
         gameObject.SetActive(false);
     }
 
-    private void CurrentSceneMainChanged(object sender, string sceneName)
-    {
-        if (sceneName.Equals(nameof(InGameSceneMain)))
-        {
-            InitializeInternal();
-        }
-
-        SystemManager.Instance.CurrentSceneMainChanged -= CurrentSceneMainChanged;
-    }
-
-    private void InitializeInternal()
-    {
-        PlayerStatePanel playerStatePanel = PanelManager.GetPanel(typeof(PlayerStatePanel)) as PlayerStatePanel;
-        playerStatePanel.SetHp(currentHp.Value, maxHp.Value);
-
-        InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
-
-        if (IsLocalPlayer)
-        {
-            inGameSceneMain.Player = this;
-        }
-
-        Transform startTransform;
-        if (isHost.Value)
-        {
-            startTransform = inGameSceneMain.PlayerStartTransform1;
-        }
-        else
-        {
-            startTransform = inGameSceneMain.PlayerStartTransform2;
-        }
-
-        SetPosition(startTransform.position);
-    }
-
-    private void Update()
-    {
-        UpdateClientInput();
-        UpdateMove();
-    }
-
-    private void UpdateMove()
-    {
-        if (moveVector.Value.sqrMagnitude == 0)
-        {
-            return;
-        }
-
-#if NETWORK_BEHAVIOUR
-        MoveServerRpc(moveVector.Value);
-#elif MONO_BEHAVIOUR
-        if (isHost.Value)
-        {
-            // Host 플레이어인 경우 클라이언트에게 RPC로 보냄
-            MoveClientRpc(moveVector.Value);
-        }
-        else
-        {
-            // Client 플레리어인 경우 서버에게 RPC로 보내고
-            // Self 동작 수행
-            MoveServerRpc(moveVector.Value);
-            if (IsLocalPlayer)
-            {
-                transform.position += AdjustMoveVector(moveVector.Value);
-            }
-        }
-#endif
-    }
-
-    [ServerRpc]
-    private void MoveServerRpc(Vector3 moveVector)
-    {
-        this.moveVector.Value = moveVector;
-        transform.position += AdjustMoveVector(moveVector);
-        // 타 플레이어가 보낸 경우 Update를 통해 초기화 되지 않으므로 사용 후 바로 초기화
-        this.moveVector.Value = Vector3.zero;
-    }
-
-    [ClientRpc]
-    private void MoveClientRpc(Vector3 moveVector)
-    {
-        this.moveVector.Value = moveVector;
-        transform.position += AdjustMoveVector(moveVector);
-        // 타 플레이어가 보낸 경우 Update를 통해 초기화 되지 않으므로 사용 후 바로 초기화
-        this.moveVector.Value = Vector3.zero;
-    }
-
     private void OnTriggerEnter(Collider other)
     {
         Enemy enemy = other.GetComponentInParent<Enemy>();
@@ -198,6 +128,44 @@ public class Player : Actor
                 enemy.OnCrash(enemy, damage.Value, crashPos);
             }
         }
+    }
+
+    private void UpdateMove()
+    {
+        if (moveVector.sqrMagnitude == 0)
+        {
+            return;
+        }
+
+        if (IsServer)
+        {
+            MoveClientRpc(moveVector);
+        }
+        else
+        {
+            MoveServerRpc(moveVector);
+            if (IsLocalPlayer)
+            {
+                transform.position += AdjustMoveVector(moveVector);
+                moveVector = Vector3.zero;
+            }
+        }
+    }
+
+    [ServerRpc]
+    private void MoveServerRpc(Vector3 moveVector)
+    {
+        this.moveVector = moveVector;
+        transform.position += AdjustMoveVector(moveVector);
+        this.moveVector = Vector3.zero;
+    }
+
+    [ClientRpc]
+    private void MoveClientRpc(Vector3 moveVector)
+    {
+        this.moveVector = moveVector;
+        transform.position += AdjustMoveVector(moveVector);
+        this.moveVector = Vector3.zero;
     }
 
     private Vector3 AdjustMoveVector(Vector3 moveVector)

@@ -8,7 +8,9 @@ public class EnemyFactory : MonoBehaviour
 
     public GameObject Load(string resourcePath)
     {
-        GameObject go = null;
+        Debug.Log("Enemy load. resourcePath = " + resourcePath);
+
+        GameObject go;
 
         if (enemyFileCache.ContainsKey(resourcePath))
         {

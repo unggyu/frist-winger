@@ -131,18 +131,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34461a94cce647b4da008b09e1234f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHp: 100
-  currentHp: 0
-  damage: 100
-  crashDamage: 100
   isDead: 0
   speed: 5
   bulletSpeed: 10
-  moveVector:
-    m_InternalValue: {x: 0, y: 0, z: 0}
   fireTransform: {fileID: 6661136890392555519}
   boxCollider: {fileID: 2220839196462449343}
-  networkObject: {fileID: 6850616225528222087}
+  moveVector: {x: 0, y: 0, z: 0}
 --- !u!54 &3071994514902130254
 Rigidbody:
   m_ObjectHideFlags: 0

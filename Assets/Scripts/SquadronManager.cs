@@ -60,7 +60,6 @@ public class SquadronManager : MonoBehaviour
     private void GenerateSquadron(SquadronTable table)
     {
         Debug.Log("GenerateSquadron");
-        // data.squadron.GenerateAllData();
 
         for (int i = 0; i < table.GetCount(); i++)
         {

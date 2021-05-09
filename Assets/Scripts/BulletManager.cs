@@ -13,7 +13,7 @@ public class BulletManager : MonoBehaviour
 
     public Bullet Generate(int index)
     {
-        if (NetworkManager.Singleton.IsClient)
+        if (!NetworkManager.Singleton.IsServer)
         {
             return null;
         }
@@ -26,7 +26,6 @@ public class BulletManager : MonoBehaviour
 
         string filePath = bulletFiles[index].filePath;
         GameObject go = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().BulletCacheSystem.Archive(filePath);
-
         Bullet bullet = go.GetComponent<Bullet>();
 
         return bullet;
@@ -60,7 +59,7 @@ public class BulletManager : MonoBehaviour
 
     public void Prepare()
     {
-        if (NetworkManager.Singleton.IsClient)
+        if (!NetworkManager.Singleton.IsServer)
         {
             return;
         }
@@ -82,7 +81,7 @@ public class BulletManager : MonoBehaviour
 
     public bool Remove(Bullet bullet)
     {
-        if (NetworkManager.Singleton.IsClient)
+        if (!NetworkManager.Singleton.IsServer)
         {
             return false;
         }

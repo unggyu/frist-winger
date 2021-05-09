@@ -1,6 +1,4 @@
-﻿// #define NETWORK_BEHAVIOUR // 정상적으로 NetworkBehaviour 인스턴스의 Update로 호출되어 실행되고 있을 때
-#define MONO_BEHAVIOUR // MohoBehaviour 인스턴스의 Update로 호출되어 실행되고 있을 때
-using MLAPI;
+﻿using MLAPI;
 using MLAPI.Messaging;
 using MLAPI.NetworkVariable;
 using UnityEngine;
@@ -8,33 +6,44 @@ using UnityEngine;
 public class Actor : NetworkBehaviour
 {
     /// <summary>
+    /// Actor Id
+    /// </summary>
+    protected readonly NetworkVariable<int> actorInstanceId =
+        new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.ServerOnly }, 0);
+
+    /// <summary>
     /// 최대 체력
     /// </summary>
-    [SerializeField] protected NetworkVariable<int> maxHp = 
+    [SerializeField] protected readonly NetworkVariable<int> maxHp = 
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 100);
 
     /// <summary>
     /// 현재 체력
     /// </summary>
-    [SerializeField] protected NetworkVariable<int> currentHp =
+    [SerializeField] protected readonly NetworkVariable<int> currentHp =
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
 
     /// <summary>
     /// 데미지
     /// </summary>
-    [SerializeField] protected NetworkVariable<int> damage =
+    [SerializeField] protected readonly NetworkVariable<int> damage =
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 1);
 
     /// <summary>
     /// 충돌 데미지
     /// </summary>
-    [SerializeField] protected NetworkVariable<int> crashDamage =
+    [SerializeField] protected readonly NetworkVariable<int> crashDamage =
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 100);
 
     /// <summary>
     /// 죽었는지 여부
     /// </summary>
     [SerializeField] private bool isDead = false;
+
+    /// <summary>
+    /// Actor Id
+    /// </summary>
+    public int ActorInstanceId => actorInstanceId.Value;
 
     /// <summary>
     /// 죽었는지 여부
@@ -60,9 +69,6 @@ public class Actor : NetworkBehaviour
 
     public void SetPosition(Vector3 position)
     {
-#if NETWORK_BEHAVIOUR
-        SetPositionServerRpc(position);
-#elif MONO_BEHAVIOUR
         if (IsServer)
         {
             SetPositionClientRpc(position);
@@ -75,7 +81,6 @@ public class Actor : NetworkBehaviour
                 transform.position = position;
             }
         }
-#endif
     }
 
     [ClientRpc]
@@ -86,12 +91,16 @@ public class Actor : NetworkBehaviour
 
     protected virtual void Initialize()
     {
-        currentHp = maxHp;
+        currentHp.Value = maxHp.Value;
+
+        if (IsServer)
+        {
+            actorInstanceId.Value = GetInstanceID();
+        }
     }
 
     protected virtual void UpdateActor()
     {
-
     }
 
     protected virtual void DecreaseHp(Actor attacker, int value, Vector3 damagePos)
@@ -126,9 +135,21 @@ public class Actor : NetworkBehaviour
             .GenerateEffect(EffectManager.ActorDeadFxIndex, transform.position);
     }
 
+    private void Awake()
+    {
+        actorInstanceId.OnValueChanged += OnActorInstanceIdChanged;
+    }
+
     private void Start()
     {
-        Initialize();
+        if (SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>() != null)
+        {
+            Initialize();
+        }
+        else
+        {
+            SystemManager.Instance.CurrentSceneMainChanged += CurrentSceneMainChanged;
+        }
     }
 
     private void Update()
@@ -139,14 +160,35 @@ public class Actor : NetworkBehaviour
     [ServerRpc]
     private void SetPositionServerRpc(Vector3 position)
     {
-        Debug.Log("SetPositionServerRpc actor = " + gameObject.name + ", id = " + NetworkObjectId + ", position = " + position);
         transform.position = position;
     }
 
     [ClientRpc]
     private void SetPositionClientRpc(Vector3 position)
     {
-        Debug.Log("SetPositionClientRpc actor = " + gameObject.name + ", id = " + NetworkObjectId + ", position = " + position);
         transform.position = position;
+    }
+
+    private void OnActorInstanceIdChanged(int previousId, int newId)
+    {
+        if (IsServer)
+        {
+            return;
+        }
+
+        if (actorInstanceId.Value != 0)
+        {
+            SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().ActorManager.Regist(actorInstanceId.Value, this);
+        }
+    }
+
+    private void CurrentSceneMainChanged(object sender, string sceneName)
+    {
+        if (sceneName.Equals(nameof(InGameSceneMain)))
+        {
+            Initialize();
+        }
+
+        SystemManager.Instance.CurrentSceneMainChanged -= CurrentSceneMainChanged;
     }
 }

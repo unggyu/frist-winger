@@ -13,7 +13,7 @@ public class EnemyManager : MonoBehaviour
 
     public bool GenerateEnemy(SquadronMemberStruct data)
     {
-        if (NetworkManager.Singleton.IsConnectedClient)
+        if (!NetworkManager.Singleton.IsServer)
         {
             return false;
         }
@@ -26,7 +26,8 @@ public class EnemyManager : MonoBehaviour
             .Archive(filePath);
 
         Enemy enemy = go.GetComponent<Enemy>();
-        enemy.SetPosition(new Vector3(data.GeneratePointX, data.GeneratePointY, 0));
+        Vector3 position = new Vector3(data.GeneratePointX, data.GeneratePointY, 0);
+        enemy.SetPosition(position);
         enemy.Reset(data);
 
         enemies.Add(enemy);
@@ -35,7 +36,7 @@ public class EnemyManager : MonoBehaviour
 
     public bool RemoveEnemy(Enemy enemy)
     {
-        if (NetworkManager.Singleton.IsConnectedClient)
+        if (!NetworkManager.Singleton.IsServer)
         {
             return false;
         }
@@ -58,7 +59,7 @@ public class EnemyManager : MonoBehaviour
 
     public void Prepare()
     {
-        if (NetworkManager.Singleton.IsConnectedClient)
+        if (!NetworkManager.Singleton.IsServer)
         {
             return;
         }

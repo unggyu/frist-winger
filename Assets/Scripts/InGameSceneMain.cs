@@ -10,6 +10,7 @@ public class InGameSceneMain : BaseSceneMain
     private readonly PrefabCacheSystem bulletCacheSystem = new PrefabCacheSystem();
     private readonly PrefabCacheSystem effectCacheSystem = new PrefabCacheSystem();
     private readonly PrefabCacheSystem damageCacheSystem = new PrefabCacheSystem();
+    private readonly ActorManager actorManager = new ActorManager();
 
     private int playerCount = 1;
 
@@ -44,6 +45,7 @@ public class InGameSceneMain : BaseSceneMain
     public PrefabCacheSystem BulletCacheSystem => bulletCacheSystem;
     public PrefabCacheSystem EffectCacheSystem => effectCacheSystem;
     public PrefabCacheSystem DamageCacheSystem => damageCacheSystem;
+    public ActorManager ActorManager => actorManager;
     public EffectManager EffectManager => effectManager;
     public BulletManager BulletManager => bulletManager;
     public EnemyManager EnemyManager => enemyManager;
@@ -58,19 +60,21 @@ public class InGameSceneMain : BaseSceneMain
     {
         inGameNetworkTransfer.GameStartClientRpc();
         enemyManager.Prepare();
+        bulletManager.Prepare();
     }
 
     protected override void OnStart()
     {
         base.OnStart();
-        Debug.Log("NetworkManager: " + NetworkManager.Singleton);
-        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
+        
+        if (NetworkManager.Singleton.IsServer)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
+        }
     }
 
     private void OnClientConnectedCallback(ulong obj)
     {
-        Debug.Log("OnClientConnectedCallback : " + obj);
-
         playerCount++;
 
         if (playerCount >= waitingPlayerCount)

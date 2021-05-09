@@ -71,27 +71,21 @@ public class Enemy : Actor
         new NetworkVariable<float>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 0.0f);
 
     /// <summary>
-    /// 방향을 고려한 속도 벡터
-    /// </summary>
-    private readonly NetworkVariable<Vector3> currentVelocity =
-        new NetworkVariable<Vector3>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, Vector3.zero);
-
-    /// <summary>
     /// 현재 상태 값
     /// </summary>
-    [SerializeField] private NetworkVariable<State> currentState =
+    [SerializeField] private readonly NetworkVariable<State> currentState =
         new NetworkVariable<State>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, State.None);
 
     /// <summary>
     /// 목표점
     /// </summary>
-    [SerializeField] private NetworkVariable<Vector3> targetPosition =
+    [SerializeField] private readonly NetworkVariable<Vector3> targetPosition =
         new NetworkVariable<Vector3>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, Vector3.zero);
 
     /// <summary>
     /// 현재 속도
     /// </summary>
-    [SerializeField] private NetworkVariable<float> currentSpeed =
+    [SerializeField] private readonly NetworkVariable<float> currentSpeed =
         new NetworkVariable<float>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 0.0f);
 
     [SerializeField] private Transform fireTransform = null;
@@ -99,25 +93,30 @@ public class Enemy : Actor
     /// <summary>
     /// 총알 속도
     /// </summary>
-    [SerializeField] private NetworkVariable<float> bulletSpeed =
+    [SerializeField] private readonly NetworkVariable<float> bulletSpeed =
         new NetworkVariable<float>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 1.0f);
 
     /// <summary>
     /// 남은 총알 개수
     /// </summary>
-    [SerializeField] private NetworkVariable<int> fireRemainCount =
+    [SerializeField] private readonly NetworkVariable<int> fireRemainCount =
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 1);
 
     /// <summary>
     /// 게임 점수
     /// </summary>
-    [SerializeField] private NetworkVariable<int> gamePoint =
+    [SerializeField] private readonly NetworkVariable<int> gamePoint =
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 0);
 
     /// <summary>
     /// Prefab 파일 위치
     /// </summary>
-    [SerializeField] private NetworkVariable<string> filePath = new NetworkVariable<string>();
+    [SerializeField] private readonly NetworkVariable<string> filePath = new NetworkVariable<string>();
+
+    /// <summary>
+    /// 방향을 고려한 속도 벡터
+    /// </summary>
+    private Vector3 currentVelocity = Vector3.zero;
 
     public string FilePath
     {
@@ -166,18 +165,30 @@ public class Enemy : Actor
     protected override void Initialize()
     {
         base.Initialize();
-        if (NetworkManager.IsConnectedClient)
+
+        InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
+        if (!IsServer)
         {
-            InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
             // 서버에서 생성한 객체이므로 따로 Parent 설정을 해줘야 함
             transform.SetParent(inGameSceneMain.EnemyManager.transform);
+            Debug.Log("Enemy SetParent transform = " + inGameSceneMain.BulletManager.transform);
             inGameSceneMain.EnemyCacheSystem.Add(FilePath, gameObject);
-            gameObject.SetActive(true);
+            gameObject.SetActive(false);
+        }
+
+        if (ActorInstanceId != 0)
+        {
+            inGameSceneMain.ActorManager.Regist(ActorInstanceId, this);
         }
     }
 
     protected override void UpdateActor()
     {
+        if (!IsServer)
+        {
+            return;
+        }
+
         switch (currentState.Value)
         {
             case State.None:
@@ -242,14 +253,11 @@ public class Enemy : Actor
             return;
         }
 
-        this.currentVelocity.Value = (targetPosition.Value - transform.position).normalized * currentSpeed.Value;
+        currentVelocity = (targetPosition.Value - transform.position).normalized * currentSpeed.Value;
 
-        // this.currentVelocity.Value는 ref로 넘길 수 없으므로 임시로 생성
-        Vector3 currentVelocity = this.currentVelocity.Value;
         // 속도 = 거리 / 시간 이므로 시간 = 거리 / 속도
-        transform.position = Vector3.SmoothDamp(transform.position, targetPosition.Value, ref currentVelocity, distance / currentSpeed.Value, maxSpeed);
-        // SmoothDamp에서 계산된 currentVelocity를 주입
-        this.currentVelocity.Value = currentVelocity;
+        Vector3 position = Vector3.SmoothDamp(transform.position, targetPosition.Value, ref currentVelocity, distance / currentSpeed.Value, maxSpeed);
+        SetPosition(position);
     }
 
     private void UpdateBattle()

@@ -35,7 +35,7 @@ public class PrefabCacheSystem
                     {
                         enemy.FilePath = filePath;
                         networkObj.Spawn(); // active가 false 되기 전에 해야함
-                        enemy.SetActiveClientRpc(false); // 클라이언트의 Enemy도 active가 false 되어야 함
+                        // enemy.IsActive = false;
                     }
 
                     Bullet bullet = go.GetComponent<Bullet>();
@@ -43,14 +43,10 @@ public class PrefabCacheSystem
                     {
                         bullet.FilePath = filePath;
                         networkObj.Spawn();
-                        bullet.SetActive(false);
+                        // bullet.IsActive = false;
                     }
                 }
-                else
-                {
-                    go.SetActive(false);
-                }
-
+                go.SetActive(false);
                 queue.Enqueue(go);
             }
 
@@ -84,7 +80,7 @@ public class PrefabCacheSystem
         Bullet bullet = go.GetComponent<Bullet>();
         if (bullet != null)
         {
-            bullet.SetActive(true);
+            bullet.SetActiveClientRpc(true);
         }
 
         return go;
