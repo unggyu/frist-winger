@@ -1,10 +1,11 @@
+using MLAPI.Serialization;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
 [System.Serializable]
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-public struct SquadronMemberStruct
+public struct SquadronMemberStruct : INetworkSerializable
 {
     public int Index;
     public int EnemyId;
@@ -14,6 +15,18 @@ public struct SquadronMemberStruct
     public float AppearPointY;
     public float DisappearPointX;
     public float DisappearPointY;
+
+    public void NetworkSerialize(NetworkSerializer serializer)
+    {
+        serializer.Serialize(ref Index);
+        serializer.Serialize(ref EnemyId);
+        serializer.Serialize(ref GeneratePointX);
+        serializer.Serialize(ref GeneratePointY);
+        serializer.Serialize(ref AppearPointX);
+        serializer.Serialize(ref AppearPointY);
+        serializer.Serialize(ref DisappearPointX);
+        serializer.Serialize(ref DisappearPointY);
+    }
 }
 
 public class SquadronTable : TableLoader<SquadronMemberStruct>

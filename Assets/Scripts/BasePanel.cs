@@ -22,9 +22,18 @@ public class BasePanel : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    protected virtual void UpdatePanel()
+    {
+    }
+
     private void Awake()
     {
         InitializePanel();
+    }
+
+    private void Update()
+    {
+        UpdatePanel();
     }
 
     private void OnDestroy()

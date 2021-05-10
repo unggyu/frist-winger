@@ -101,6 +101,12 @@ public class PrefabCacheSystem
             enemy.SetActiveClientRpc(false);
         }
 
+        Bullet bullet = gameObject.GetComponent<Bullet>();
+        if (bullet != null)
+        {
+            bullet.SetActiveClientRpc(false);
+        }
+
         caches[filePath].Enqueue(gameObject);
         return true;
     }

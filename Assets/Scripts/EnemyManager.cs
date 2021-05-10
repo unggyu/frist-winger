@@ -28,7 +28,7 @@ public class EnemyManager : MonoBehaviour
         Enemy enemy = go.GetComponent<Enemy>();
         Vector3 position = new Vector3(data.GeneratePointX, data.GeneratePointY, 0);
         enemy.SetPosition(position);
-        enemy.Reset(data);
+        enemy.ResetData(data);
 
         enemies.Add(enemy);
         return true;

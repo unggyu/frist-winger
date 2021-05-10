@@ -1,4 +1,5 @@
-﻿using MLAPI.NetworkVariable;
+﻿using MLAPI.Messaging;
+using MLAPI.NetworkVariable;
 using UnityEngine;
 
 public class Enemy : Actor
@@ -144,7 +145,23 @@ public class Enemy : Actor
         bullet.Fire(actorInstanceId.Value, fireTransform.position, -fireTransform.right, bulletSpeed.Value, damage.Value);
     }
 
-    public void Reset(SquadronMemberStruct data)
+    public void ResetData(SquadronMemberStruct data)
+    {
+        if (IsServer)
+        {
+            ResetDataClientRpc(data);
+        }
+        else
+        {
+            ResetDataServerRpc(data);
+            if (IsLocalPlayer)
+            {
+                ResetDataInternal(data);
+            }
+        }
+    }
+
+    private void ResetDataInternal(SquadronMemberStruct data)
     {
         EnemyStruct enemyStruct = SystemManager.Instance.EnemyTable.GetEnemy(data.EnemyId);
 
@@ -160,6 +177,7 @@ public class Enemy : Actor
 
         currentState.Value = State.Ready;
         lastActionUpdateTime.Value = Time.time;
+        isDead = false; // Enemy는 재사용 되므로 초기화 시켜줘야함
     }
 
     protected override void Initialize()
@@ -209,9 +227,9 @@ public class Enemy : Actor
         }
     }
 
-    protected override void OnDead(Actor killer)
+    protected override void OnDead()
     {
-        base.OnDead(killer);
+        base.OnDead();
 
         SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().GamePointAccumulator.Accumulate(gamePoint.Value);
         SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().EnemyManager.RemoveEnemy(this);
@@ -219,9 +237,9 @@ public class Enemy : Actor
         currentState.Value = State.Dead;
     }
 
-    protected override void DecreaseHp(Actor attacker, int value, Vector3 damagePos)
+    protected override void DecreaseHp(int value, Vector3 damagePos)
     {
-        base.DecreaseHp(attacker, value, damagePos);
+        base.DecreaseHp(value, damagePos);
 
         Vector3 damagePoint = damagePos + Random.insideUnitSphere * 0.5f;
         SystemManager
@@ -229,6 +247,22 @@ public class Enemy : Actor
             .GetCurrentSceneMain<InGameSceneMain>()
             .DamageManager
             .Generate(DamageManager.EnemyDamageIndex, damagePoint, value, Color.magenta);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        Player player = other.GetComponentInParent<Player>();
+        if (player)
+        {
+            if (!player.IsDead)
+            {
+                BoxCollider box = ((BoxCollider)other);
+                Vector3 crashPos = player.transform.position + box.center;
+                crashPos.x += box.size.x * 0.5f;
+
+                player.OnCrash(damage.Value, crashPos);
+            }
+        }
     }
 
     private void UpdateReady()
@@ -294,22 +328,6 @@ public class Enemy : Actor
         }
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        Player player = other.GetComponentInParent<Player>();
-        if (player)
-        {
-            if (!player.IsDead)
-            {
-                BoxCollider box = ((BoxCollider)other);
-                Vector3 crashPos = player.transform.position + box.center;
-                crashPos.x += box.size.x * 0.5f;
-
-                player.OnCrash(player, damage.Value, crashPos);
-            }
-        }
-    }
-
     private void Disappear(Vector3 targetPos)
     {
         targetPosition.Value = targetPos;
@@ -317,5 +335,17 @@ public class Enemy : Actor
 
         currentState.Value = State.Disappear;
         moveStartTime.Value = Time.time;
+    }
+
+    [ServerRpc]
+    private void ResetDataServerRpc(SquadronMemberStruct data)
+    {
+        ResetDataInternal(data);
+    }
+
+    [ClientRpc]
+    private void ResetDataClientRpc(SquadronMemberStruct data)
+    {
+        ResetDataInternal(data);
     }
 }

@@ -10,10 +10,12 @@ public class Player : Actor
     [SerializeField] private float bulletSpeed = 1.0f;
     [SerializeField] private Transform fireTransform = null;
     [SerializeField] private BoxCollider boxCollider = null;
+    [SerializeField] private Material clientPlayerMaterial = null;
 
     /// <summary>
     /// Host 플레이어인지 여부
     /// </summary>
+    [SerializeField]
     private readonly NetworkVariable<bool> isHost =
         new NetworkVariable<bool>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.ServerOnly });
 
@@ -66,9 +68,6 @@ public class Player : Actor
             isHost.Value = true;
         }
 
-        PlayerStatePanel playerStatePanel = PanelManager.GetPanel(typeof(PlayerStatePanel)) as PlayerStatePanel;
-        playerStatePanel.SetHp(currentHp.Value, maxHp.Value);
-
         InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
 
         if (IsLocalPlayer)
@@ -84,6 +83,8 @@ public class Player : Actor
         else
         {
             startTransform = inGameSceneMain.PlayerStartTransform2;
+            MeshRenderer meshRenderer = GetComponentInChildren<MeshRenderer>();
+            meshRenderer.material = clientPlayerMaterial;
         }
 
         SetPosition(startTransform.position);
@@ -101,11 +102,9 @@ public class Player : Actor
         UpdateMove();
     }
 
-    protected override void DecreaseHp(Actor attacker, int value, Vector3 damagePos)
+    protected override void DecreaseHp(int value, Vector3 damagePos)
     {
-        base.DecreaseHp(attacker, value, damagePos);
-        PlayerStatePanel playerStatePanel = PanelManager.GetPanel(typeof(PlayerStatePanel)) as PlayerStatePanel;
-        playerStatePanel.SetHp(currentHp.Value, maxHp.Value);
+        base.DecreaseHp(value, damagePos);
 
         Vector3 damagePoint = damagePos + Random.insideUnitSphere * 0.5f;
         SystemManager
@@ -115,9 +114,9 @@ public class Player : Actor
             .Generate(DamageManager.PlayerDamageIndex, damagePoint, value, Color.red);
     }
 
-    protected override void OnDead(Actor killer)
+    protected override void OnDead()
     {
-        base.OnDead(killer);
+        base.OnDead();
         gameObject.SetActive(false);
     }
 
@@ -132,7 +131,7 @@ public class Player : Actor
                 Vector3 crashPos = enemy.transform.position + box.center;
                 crashPos.x += box.size.x * 0.5f;
 
-                enemy.OnCrash(enemy, damage.Value, crashPos);
+                enemy.OnCrash(damage.Value, crashPos);
             }
         }
     }
@@ -157,29 +156,6 @@ public class Player : Actor
                 moveVector = Vector3.zero;
             }
         }
-    }
-
-    [ServerRpc]
-    private void MoveServerRpc(Vector3 moveVector)
-    {
-        this.moveVector = moveVector;
-        transform.position += AdjustMoveVector(moveVector);
-        this.moveVector = Vector3.zero;
-    }
-
-    [ClientRpc]
-    private void MoveClientRpc(Vector3 moveVector)
-    {
-        this.moveVector = moveVector;
-        transform.position += AdjustMoveVector(moveVector);
-        this.moveVector = Vector3.zero;
-    }
-
-    [ServerRpc]
-    private void FireServerRpc(int ownerInstanceId, Vector3 firePosition, Vector3 direction, float speed, int damage)
-    {
-        Bullet bullet = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().BulletManager.Generate(BulletManager.PlayerBulletIndex);
-        bullet.Fire(ownerInstanceId, firePosition, direction, speed, damage);
     }
 
     private Vector3 AdjustMoveVector(Vector3 moveVector)
@@ -212,5 +188,28 @@ public class Player : Actor
         }
 
         return moveVector;
+    }
+
+    [ServerRpc]
+    private void MoveServerRpc(Vector3 moveVector)
+    {
+        this.moveVector = moveVector;
+        transform.position += AdjustMoveVector(moveVector);
+        this.moveVector = Vector3.zero;
+    }
+
+    [ClientRpc]
+    private void MoveClientRpc(Vector3 moveVector)
+    {
+        this.moveVector = moveVector;
+        transform.position += AdjustMoveVector(moveVector);
+        this.moveVector = Vector3.zero;
+    }
+
+    [ServerRpc]
+    private void FireServerRpc(int ownerInstanceId, Vector3 firePosition, Vector3 direction, float speed, int damage)
+    {
+        Bullet bullet = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().BulletManager.Generate(BulletManager.PlayerBulletIndex);
+        bullet.Fire(ownerInstanceId, firePosition, direction, speed, damage);
     }
 }

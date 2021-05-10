@@ -30,7 +30,7 @@ public class Actor : NetworkBehaviour
     /// </summary>
     [SerializeField]
     protected readonly NetworkVariable<int> damage =
-        new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 1);
+        new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 100);
 
     /// <summary>
     /// 충돌 데미지
@@ -38,6 +38,11 @@ public class Actor : NetworkBehaviour
     [SerializeField]
     protected readonly NetworkVariable<int> crashDamage =
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone }, 100);
+
+    /// <summary>
+    /// 죽었는지 여부
+    /// </summary>
+    [SerializeField] protected bool isDead = false;
 
     /// <summary>
     /// 초기화 여부
@@ -50,14 +55,19 @@ public class Actor : NetworkBehaviour
     private bool isNeedRegistActor = false;
 
     /// <summary>
-    /// 죽었는지 여부
-    /// </summary>
-    [SerializeField] private bool isDead = false;
-
-    /// <summary>
     /// Actor Id
     /// </summary>
     public int ActorInstanceId => actorInstanceId.Value;
+
+    /// <summary>
+    /// 최대 체력
+    /// </summary>
+    public int MaxHp => maxHp.Value;
+
+    /// <summary>
+    /// 현재 체력
+    /// </summary>
+    public int CurrentHp => currentHp.Value;
 
     /// <summary>
     /// 죽었는지 여부
@@ -69,16 +79,15 @@ public class Actor : NetworkBehaviour
     /// </summary>
     protected int CrashDamage => crashDamage.Value;
 
-    public virtual void OnBulletHited(Actor attacker, int damage, Vector3 hitPos)
+    public virtual void OnBulletHited(int damage, Vector3 hitPos)
     {
         Debug.Log("OnBulletHited damage = " + damage);
-        DecreaseHp(attacker, damage, hitPos);
+        DecreaseHp(damage, hitPos);
     }
 
-    public virtual void OnCrash(Actor attacker, int damage, Vector3 crashPos)
+    public virtual void OnCrash(int damage, Vector3 crashPos)
     {
-        Debug.Log("OnCrash attacker = " + attacker.name + ", damage = " + damage);
-        DecreaseHp(attacker, damage, crashPos);
+        DecreaseHp(damage, crashPos);
     }
 
     public void SetPosition(Vector3 position)
@@ -119,7 +128,28 @@ public class Actor : NetworkBehaviour
     {
     }
 
-    protected virtual void DecreaseHp(Actor attacker, int value, Vector3 damagePos)
+    protected virtual void DecreaseHp(int value, Vector3 damagePos)
+    {
+        if (IsDead)
+        {
+            return;
+        }
+
+        if (IsServer)
+        {
+            DecreaseHpClientRpc(value, damagePos);
+        }
+        else
+        {
+            DecreaseHpServerRpc(value, damagePos);
+            if (IsLocalPlayer)
+            {
+                DecreaseHpInternal(value, damagePos);
+            }
+        }
+    }
+
+    protected virtual void DecreaseHpInternal(int value, Vector3 damagePos)
     {
         if (isDead)
         {
@@ -135,11 +165,11 @@ public class Actor : NetworkBehaviour
 
         if (currentHp.Value == 0)
         {
-            OnDead(attacker);
+            OnDead();
         }
     }
 
-    protected virtual void OnDead(Actor killer)
+    protected virtual void OnDead()
     {
         Debug.Log(name + " OnDead");
         isDead = true;
@@ -183,6 +213,18 @@ public class Actor : NetworkBehaviour
     private void SetPositionClientRpc(Vector3 position)
     {
         transform.position = position;
+    }
+
+    [ServerRpc]
+    private void DecreaseHpServerRpc(int value, Vector3 damagePos)
+    {
+        DecreaseHpInternal(value, damagePos);
+    }
+
+    [ClientRpc]
+    private void DecreaseHpClientRpc(int value, Vector3 damagePos)
+    {
+        DecreaseHpInternal(value, damagePos);
     }
 
     private void RegistActor()

@@ -140,7 +140,7 @@ public class Bullet : NetworkBehaviour
             return;
         }
 
-        actor.OnBulletHited(owner, damage.Value, transform.position);
+        actor.OnBulletHited(damage.Value, transform.position);
 
         Collider myCollider = GetComponentInChildren<Collider>();
         myCollider.enabled = false;
@@ -153,21 +153,19 @@ public class Bullet : NetworkBehaviour
             .GetCurrentSceneMain<InGameSceneMain>()
             .EffectManager
             .GenerateEffect(EffectManager.BulletDisappearFxIndex, transform.position);
-
         go.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+
         Disappear();
     }
 
     private void UpdateMove()
     {
-        if (!needMove.Value)
+        if (IsHost && needMove.Value) // 총알의 움직임은 오직 서버에서만 제어
         {
-            return;
+            Vector3 moveVector = moveDirection.Value.normalized * speed.Value * Time.deltaTime;
+            moveVector = AdjustMove(moveVector);
+            MoveClientRpc(moveVector);
         }
-
-        Vector3 moveVector = moveDirection.Value.normalized * speed.Value * Time.deltaTime;
-        moveVector = AdjustMove(moveVector);
-        transform.position += moveVector;
     }
 
     private Vector3 AdjustMove(Vector3 moveVector)
@@ -228,13 +226,14 @@ public class Bullet : NetworkBehaviour
         transform.position = position;
     }
 
+    [ClientRpc]
+    private void MoveClientRpc(Vector3 moveVector)
+    {
+        transform.position += moveVector;
+    }
+
     private void Disappear()
     {
         SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().BulletManager.Remove(this);
-    }
-
-    private void OnIsActiveChanged(bool previousValue, bool newValue)
-    {
-        gameObject.SetActive(newValue);
     }
 }

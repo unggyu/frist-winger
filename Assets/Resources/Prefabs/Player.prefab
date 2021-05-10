@@ -136,6 +136,8 @@ MonoBehaviour:
   bulletSpeed: 10
   fireTransform: {fileID: 6661136890392555519}
   boxCollider: {fileID: 2220839196462449343}
+  clientPlayerMaterial: {fileID: 2100000, guid: 8b52c4a2cbd2a8248b7c6e782e73497e,
+    type: 2}
   moveVector: {x: 0, y: 0, z: 0}
 --- !u!54 &3071994514902130254
 Rigidbody:
