@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Player : Actor
 {
+    private const string playerHudPath = "Prefabs/PlayerHud";
     private readonly InputController inputController = new InputController();
 
     [SerializeField] private float speed = 1.0f;
@@ -94,6 +95,8 @@ public class Player : Actor
             // Player 등록
             inGameSceneMain.ActorManager.Regist(actorInstanceId.Value, this);
         }
+
+        InitializeHud();
     }
 
     protected override void UpdateActor()
@@ -134,6 +137,15 @@ public class Player : Actor
                 enemy.OnCrash(damage.Value, crashPos);
             }
         }
+    }
+
+    private void InitializeHud()
+    {
+        InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
+        GameObject go = Resources.Load<GameObject>(playerHudPath);
+        GameObject goInstance = Instantiate(go, inGameSceneMain.DamageManager.CanvasTransform);
+        PlayerHud playerHud = goInstance.GetComponent<PlayerHud>();
+        playerHud.Initialize(this);
     }
 
     private void UpdateMove()

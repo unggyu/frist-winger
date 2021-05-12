@@ -17,6 +17,12 @@ public class Bullet : NetworkBehaviour
     private const float lifeTime = 15.0f;
 
     /// <summary>
+    /// 활성화 여부
+    /// </summary>
+    private readonly NetworkVariable<bool> isActive =
+        new NetworkVariable<bool>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.ServerOnly }, true);
+
+    /// <summary>
     /// 이동이 필요한지 여부
     /// </summary>
     private readonly NetworkVariable<bool> needMove =
@@ -67,6 +73,33 @@ public class Bullet : NetworkBehaviour
         new NetworkVariable<int>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.Everyone });
 
     /// <summary>
+    /// 초기화 여부
+    /// </summary>
+    private bool initialized = false;
+
+    /// <summary>
+    /// 활성화 여부
+    /// </summary>
+    public bool IsActive
+    {
+        get => isActive.Value;
+        set
+        {
+            if (IsServer)
+            {
+                // true는 ClientRpc로만 설정이 가능하고
+                // false는 NetworkVariable으로만 설정이 가능함
+                // 이유는 정확히 모르겠지만 MLAPI 자체 문제로 생각됨
+                isActive.Value = value;
+                if (value)
+                {
+                    SetActiveClientRpc(value);
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Prefab 파일 경로
     /// </summary>
     public string FilePath
@@ -87,20 +120,16 @@ public class Bullet : NetworkBehaviour
         firedTime.Value = Time.time;
     }
 
-    [ClientRpc]
-    public void SetActiveClientRpc(bool value)
-    {
-        gameObject.SetActive(value);
-    }
-
     private void Start()
     {
-        if (!IsServer)
+        // InGameSceneMain이 되기전에 Start 메소드가 실행되는 경우가 있음
+        if (SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>() != null)
         {
-            InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
-            transform.SetParent(inGameSceneMain.BulletManager.transform);
-            inGameSceneMain.BulletCacheSystem.Add(FilePath, gameObject);
-            gameObject.SetActive(false);
+            Initialize();
+        }
+        else
+        {
+            SystemManager.Instance.CurrentSceneMainChanged += CurrentSceneMainChanged;
         }
     }
 
@@ -115,9 +144,29 @@ public class Bullet : NetworkBehaviour
         UpdateMove();
     }
 
+    private void OnDestroy()
+    {
+        isActive.OnValueChanged -= OnIsActiveChanged;
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         OnBulletCollision(other);
+    }
+
+    private void Initialize()
+    {
+        isActive.OnValueChanged += OnIsActiveChanged;
+
+        if (!initialized && !IsServer)
+        {
+            InGameSceneMain inGameSceneMain = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>();
+            transform.SetParent(inGameSceneMain.BulletManager.transform);
+            inGameSceneMain.BulletCacheSystem.Add(FilePath, gameObject);
+            gameObject.SetActive(false);
+        }
+
+        initialized = true;
     }
 
     private void OnBulletCollision(Collider collider)
@@ -214,6 +263,30 @@ public class Bullet : NetworkBehaviour
         }
     }
 
+    private void CurrentSceneMainChanged(object sender, string sceneName)
+    {
+        if (sceneName.Equals(nameof(InGameSceneMain)))
+        {
+            if (!initialized)
+            {
+                Initialize();
+            }
+        }
+    }
+
+    private void Disappear()
+    {
+        SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().BulletManager.Remove(this);
+    }
+
+    private void OnIsActiveChanged(bool previousValue, bool newValue)
+    {
+        if (gameObject.activeSelf != newValue)
+        {
+            gameObject.SetActive(newValue);
+        }
+    }
+
     [ServerRpc]
     private void SetPositionServerRpc(Vector3 position)
     {
@@ -232,8 +305,9 @@ public class Bullet : NetworkBehaviour
         transform.position += moveVector;
     }
 
-    private void Disappear()
+    [ClientRpc]
+    private void SetActiveClientRpc(bool value)
     {
-        SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().BulletManager.Remove(this);
+        gameObject.SetActive(value);
     }
 }

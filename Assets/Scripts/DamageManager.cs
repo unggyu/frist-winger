@@ -11,6 +11,8 @@ public class DamageManager : MonoBehaviour
     [SerializeField] private Transform canvasTransform = null;
     [SerializeField] private PrefabCacheData[] files = null;
 
+    public Transform CanvasTransform => canvasTransform;
+
     public void Prepare()
     {
         for (int i = 0; i < files.Length; i++)
@@ -60,7 +62,6 @@ public class DamageManager : MonoBehaviour
         string filePath = files[index].filePath;
         GameObject go = SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>().DamageCacheSystem.Archive(filePath);
         go.transform.position = Camera.main.WorldToScreenPoint(position);
-        Debug.Log("Damage generate to world position = " + go.transform.position + ", position = " + position);
 
         UIDamage damage = go.GetComponent<UIDamage>();
         damage.FilePath = filePath;

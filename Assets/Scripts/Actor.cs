@@ -5,6 +5,9 @@ using UnityEngine;
 
 public class Actor : NetworkBehaviour
 {
+    protected readonly NetworkVariable<bool> isActive =
+        new NetworkVariable<bool>(new NetworkVariableSettings { WritePermission = NetworkVariablePermission.ServerOnly }, true);
+
     /// <summary>
     /// Actor Id
     /// </summary>
@@ -74,6 +77,25 @@ public class Actor : NetworkBehaviour
     /// </summary>
     public bool IsDead => isDead;
 
+    public bool IsActive
+    {
+        get => isActive.Value;
+        set
+        {
+            if (IsServer)
+            {
+                // true는 ClientRpc로만 설정이 가능하고
+                // false는 NetworkVariable으로만 설정이 가능함
+                // 이유는 정확히 모르겠지만 MLAPI 자체 문제로 생각됨
+                isActive.Value = value;
+                if (value)
+                {
+                    SetActiveClientRpc(value);
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// 충돌 데미지
     /// </summary>
@@ -96,7 +118,7 @@ public class Actor : NetworkBehaviour
         {
             SetPositionClientRpc(position);
         }
-        else
+        else if (!IsServer && IsOwner)
         {
             SetPositionServerRpc(position);
             if (IsLocalPlayer)
@@ -106,14 +128,11 @@ public class Actor : NetworkBehaviour
         }
     }
 
-    [ClientRpc]
-    public void SetActiveClientRpc(bool value)
-    {
-        gameObject.SetActive(value);
-    }
-
     protected virtual void Initialize()
     {
+        isActive.OnValueChanged += OnIsActiveChanged;
+        actorInstanceId.OnValueChanged += OnActorInstanceIdChanged;
+
         currentHp.Value = maxHp.Value;
 
         if (IsServer)
@@ -139,7 +158,7 @@ public class Actor : NetworkBehaviour
         {
             DecreaseHpClientRpc(value, damagePos);
         }
-        else
+        else if (!IsServer && IsOwner)
         {
             DecreaseHpServerRpc(value, damagePos);
             if (IsLocalPlayer)
@@ -181,11 +200,6 @@ public class Actor : NetworkBehaviour
             .GenerateEffect(EffectManager.ActorDeadFxIndex, transform.position);
     }
 
-    private void Awake()
-    {
-        actorInstanceId.OnValueChanged += OnActorInstanceIdChanged;
-    }
-
     private void Start()
     {
         if (SystemManager.Instance.GetCurrentSceneMain<InGameSceneMain>() != null)
@@ -201,6 +215,12 @@ public class Actor : NetworkBehaviour
     private void Update()
     {
         UpdateActor();
+    }
+
+    private void OnDestroy()
+    {
+        isActive.OnValueChanged -= OnIsActiveChanged;
+        actorInstanceId.OnValueChanged -= OnActorInstanceIdChanged;
     }
 
     [ServerRpc]
@@ -227,6 +247,12 @@ public class Actor : NetworkBehaviour
         DecreaseHpInternal(value, damagePos);
     }
 
+    [ClientRpc]
+    private void SetActiveClientRpc(bool value)
+    {
+        gameObject.SetActive(value);
+    }
+
     private void RegistActor()
     {
         if (actorInstanceId.Value != 0)
@@ -250,6 +276,14 @@ public class Actor : NetworkBehaviour
         {
             isNeedRegistActor = true;
             SystemManager.Instance.CurrentSceneMainChanged += CurrentSceneMainChanged;
+        }
+    }
+
+    private void OnIsActiveChanged(bool previousValue, bool newValue)
+    {
+        if (gameObject.activeSelf != newValue)
+        {
+            gameObject.SetActive(newValue);
         }
     }
 

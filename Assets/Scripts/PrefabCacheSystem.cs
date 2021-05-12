@@ -35,7 +35,6 @@ public class PrefabCacheSystem
                     {
                         enemy.FilePath = filePath;
                         networkObj.Spawn(); // active가 false 되기 전에 해야함
-                        // enemy.IsActive = false;
                     }
 
                     Bullet bullet = go.GetComponent<Bullet>();
@@ -43,7 +42,6 @@ public class PrefabCacheSystem
                     {
                         bullet.FilePath = filePath;
                         networkObj.Spawn();
-                        // bullet.IsActive = false;
                     }
                 }
                 go.SetActive(false);
@@ -71,16 +69,19 @@ public class PrefabCacheSystem
         GameObject go = caches[filePath].Dequeue();
         go.SetActive(true);
 
-        Enemy enemy = go.GetComponent<Enemy>();
-        if (enemy != null)
+        if (NetworkManager.Singleton.IsServer)
         {
-            enemy.SetActiveClientRpc(true);
-        }
+            Enemy enemy = go.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.IsActive = true;
+            }
 
-        Bullet bullet = go.GetComponent<Bullet>();
-        if (bullet != null)
-        {
-            bullet.SetActiveClientRpc(true);
+            Bullet bullet = go.GetComponent<Bullet>();
+            if (bullet != null)
+            {
+                bullet.IsActive = true;
+            }
         }
 
         return go;
@@ -94,17 +95,23 @@ public class PrefabCacheSystem
             return false;
         }
 
-        gameObject.SetActive(false);
-        Enemy enemy = gameObject.GetComponent<Enemy>();
-        if (enemy != null)
+        if (NetworkManager.Singleton.IsServer)
         {
-            enemy.SetActiveClientRpc(false);
-        }
+            Enemy enemy = gameObject.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.IsActive = false;
+            }
 
-        Bullet bullet = gameObject.GetComponent<Bullet>();
-        if (bullet != null)
+            Bullet bullet = gameObject.GetComponent<Bullet>();
+            if (bullet != null)
+            {
+                bullet.IsActive = false;
+            }
+        }
+        else
         {
-            bullet.SetActiveClientRpc(false);
+            gameObject.SetActive(false);
         }
 
         caches[filePath].Enqueue(gameObject);

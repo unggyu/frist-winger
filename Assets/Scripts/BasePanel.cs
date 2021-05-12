@@ -40,12 +40,4 @@ public class BasePanel : MonoBehaviour
     {
         DestroyPanel();
     }
-
-    private void OnGUI()
-    {
-        if (GUILayout.Button("Close"))
-        {
-            Close();
-        }
-    }
 }

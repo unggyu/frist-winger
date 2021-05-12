@@ -29,8 +29,8 @@ public class EnemyManager : MonoBehaviour
         Vector3 position = new Vector3(data.GeneratePointX, data.GeneratePointY, 0);
         enemy.SetPosition(position);
         enemy.ResetData(data);
-
         enemies.Add(enemy);
+
         return true;
     }
 
